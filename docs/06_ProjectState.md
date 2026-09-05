@@ -12,8 +12,8 @@
 
 ## Current Position
 
-- **Status:** In progress — Step 0.5 (continued) project scaffold complete. Steps 0.1-0.4 and 0.6-0.9 (account/env setup) are being handled directly by the user, outside the agent workflow, and are intentionally left `⬜ Not started` below until the user confirms them — do not attempt to redo the scaffold or re-ask for these.
-- **Next up:** Step 0.8 (`.env.local` + Vercel env vars) once the user has completed the account setup steps — then Step 1 (Database Schema & Drizzle Setup).
+- **Status:** In progress — Step 1 (Database Schema & Drizzle Setup) complete. Steps 0.1-0.4 and 0.6-0.9 (account/env setup) are being handled directly by the user, outside the agent workflow; DATABASE_URL (Neon) is confirmed set in `.env.local`, other keys (Stripe/Resend/AUTH_SECRET) are still placeholders pending the user.
+- **Next up:** Step 2.1 (Auth.js configuration + Drizzle adapter) — will need `@auth/drizzle-adapter` installed and a real `AUTH_SECRET` in `.env.local` before it can be tested end-to-end, though config can be written once AUTH_SECRET is set.
 - **Last updated by:** Claude Code session, 2026-09-05.
 - **Tech stack lock-in (must match `00_ScopeDocument.md` §12 — do not deviate without updating that doc too):** Next.js App Router + TypeScript, Tailwind CSS, shadcn/ui, Framer Motion + GSAP/ScrollTrigger + animate.css, Neon Postgres + Drizzle ORM, Auth.js (NextAuth v5), Stripe, Resend, Vercel.
 - **Component reuse/coding standards:** governed by `07_ComponentArchitectureAndStandards.md` — re-read it before building or extending any shared component (Navbar, Footer, ArticleCard, AuthModal, SearchOverlay, dashboard shell, application-state components, etc.).
@@ -55,7 +55,7 @@
 
 | Step | Status | What was actually done / decided | Notes / deviations |
 |---|---|---|---|
-| 1 — DB Schema & Drizzle Setup | ⬜ Not started | | |
+| 1 — DB Schema & Drizzle Setup | ✅ Done | Created `drizzle.config.ts`, `src/lib/db.ts` (neon-http driver), and all 16 schema files under `drizzle/schema/` (users, auth [accounts/sessions/verificationTokens], categories, tags, articles + articleAuthors + articleTags, publications, invites, subscriptions, purchases, readEvents, ledger, reports, comments, otpCodes, notifications, platformConfig) plus `drizzle/schema/index.ts` barrel with full relations(). Added `db:generate`/`db:migrate`/`db:studio`/`db:seed` npm scripts. Generated and ran the migration against the real Neon DB (20 tables confirmed present via direct query) and ran `drizzle/seed.ts`, confirmed platformConfig row has exactly `standalone 80/20` and `in_publication 60/20/20` per spec. `npx tsc --noEmit` and `npm run build` both pass with zero errors. Added `.env.example` (was missing from Step 0.8) listing all documented env vars with comments. | Deviation: added a `deprecated` boolean to `categories` (not explicitly listed in Step 1's spec) since Step 11 requires soft-delete/deprecate categories — added now to avoid a follow-up migration, same pattern the guide already uses for otpCodes/notifications. `users.id`/auth table FKs use `uuid` (not `text`) to match the guide's "id (uuid pk)" spec for users — `@auth/drizzle-adapter` isn't installed yet (that's Step 2.1), so adapter compatibility with uuid ids will be confirmed then. |
 | 2.1 Auth.js config + Drizzle adapter | ⬜ Not started | | |
 | 2.2 Signup flow + auth modal | ⬜ Not started | | |
 | 2.3 Email verification | ⬜ Not started | | |
