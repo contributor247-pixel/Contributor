@@ -1,37 +1,82 @@
 import { relations } from "drizzle-orm";
-import { users } from "./users";
+import { users, userRoleEnum, userStatusEnum } from "./users";
 import { accounts, sessions, verificationTokens } from "./auth";
 import { categories } from "./categories";
 import { tags } from "./tags";
-import { articles, articleAuthors, articleTags } from "./articles";
+import {
+  articles,
+  articleAuthors,
+  articleTags,
+  articleStatusEnum,
+} from "./articles";
 import { publications } from "./publications";
-import { invites } from "./invites";
-import { subscriptions } from "./subscriptions";
+import { invites, inviteStatusEnum } from "./invites";
+import {
+  subscriptions,
+  subscriptionTypeEnum,
+  subscriptionStatusEnum,
+  billingIntervalEnum,
+} from "./subscriptions";
 import { purchases } from "./purchases";
 import { readEvents } from "./readEvents";
-import { ledger } from "./ledger";
-import { reports } from "./reports";
+import {
+  ledger,
+  ledgerSourceTypeEnum,
+  ledgerPayoutStatusEnum,
+} from "./ledger";
+import {
+  reports,
+  reportReasonEnum,
+  reportStatusEnum,
+  reportActionEnum,
+} from "./reports";
 import { comments } from "./comments";
 import { otpCodes } from "./otpCodes";
-import { notifications } from "./notifications";
+import { notifications, notificationTypeEnum } from "./notifications";
 import { platformConfig } from "./platformConfig";
 
-export * from "./users";
-export * from "./auth";
-export * from "./categories";
-export * from "./tags";
-export * from "./articles";
-export * from "./publications";
-export * from "./invites";
-export * from "./subscriptions";
-export * from "./purchases";
-export * from "./readEvents";
-export * from "./ledger";
-export * from "./reports";
-export * from "./comments";
-export * from "./otpCodes";
-export * from "./notifications";
-export * from "./platformConfig";
+// Re-export every table/enum by name explicitly. Deliberately NOT using
+// `export * from "./x"` here: under tsx's ESM transform, `export *` of a
+// module exporting a Drizzle `pgTable` silently resolves to `undefined`
+// for every consumer of this barrel (verified independent of this
+// project's own code — Next.js's own bundler is unaffected, but any
+// tsx/ts-node-run script, including drizzle-kit tooling, is not).
+// Explicit named re-exports below sidestep that bug entirely.
+export {
+  users,
+  userRoleEnum,
+  userStatusEnum,
+  accounts,
+  sessions,
+  verificationTokens,
+  categories,
+  tags,
+  articles,
+  articleAuthors,
+  articleTags,
+  articleStatusEnum,
+  publications,
+  invites,
+  inviteStatusEnum,
+  subscriptions,
+  subscriptionTypeEnum,
+  subscriptionStatusEnum,
+  billingIntervalEnum,
+  purchases,
+  readEvents,
+  ledger,
+  ledgerSourceTypeEnum,
+  ledgerPayoutStatusEnum,
+  reports,
+  reportReasonEnum,
+  reportStatusEnum,
+  reportActionEnum,
+  comments,
+  otpCodes,
+  notifications,
+  notificationTypeEnum,
+  platformConfig,
+};
 
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
