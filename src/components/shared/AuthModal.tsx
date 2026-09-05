@@ -237,6 +237,7 @@ function SignupForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [successIsWarning, setSuccessIsWarning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -260,8 +261,15 @@ function SignupForm({
       setFormError(result.error);
       return;
     }
-    setSuccessMessage("Account created. Check your email to verify your account before signing in.");
-    setTimeout(onSuccess, 1800);
+    if (result.emailSendFailed) {
+      setSuccessIsWarning(true);
+      setSuccessMessage(
+        "Account created, but we couldn't send the verification email right now. You can request a new one from the verification page once you sign in."
+      );
+    } else {
+      setSuccessMessage("Account created. Check your email to verify your account before signing in.");
+    }
+    setTimeout(onSuccess, result.emailSendFailed ? 3200 : 1800);
   };
 
   return (
@@ -271,7 +279,13 @@ function SignupForm({
       </h1>
 
       {successMessage ? (
-        <p className="rounded-[4px] border border-[#1E8E5A] bg-[#1E8E5A0f] px-4 py-3 text-sm text-[#1E8E5A]">
+        <p
+          className={
+            successIsWarning
+              ? "rounded-[4px] border border-[#B8860B] bg-[#B8860B0f] px-4 py-3 text-sm text-[#B8860B]"
+              : "rounded-[4px] border border-[#1E8E5A] bg-[#1E8E5A0f] px-4 py-3 text-sm text-[#1E8E5A]"
+          }
+        >
           {successMessage}
         </p>
       ) : (

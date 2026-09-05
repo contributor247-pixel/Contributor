@@ -8,7 +8,7 @@ import { signupSchema, type SignupInput } from "@/lib/validators/auth";
 import { sendVerificationEmail } from "@/lib/email";
 
 export type SignupResult =
-  | { success: true }
+  | { success: true; emailSendFailed?: boolean }
   | { success: false; error: string };
 
 export async function signupAction(input: SignupInput): Promise<SignupResult> {
@@ -36,7 +36,15 @@ export async function signupAction(input: SignupInput): Promise<SignupResult> {
     })
     .returning();
 
-  await sendVerificationEmail(user);
+  try {
+    await sendVerificationEmail(user);
+  } catch {
+    // The account is already created — don't roll it back over a
+    // transient email-provider failure. Surface it so the UI can tell
+    // the user and offer a retry via resendVerificationAction instead of
+    // claiming an email was sent when it wasn't.
+    return { success: true, emailSendFailed: true };
+  }
 
   return { success: true };
 }
