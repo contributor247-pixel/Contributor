@@ -12,9 +12,9 @@
 
 ## Current Position
 
-- **Status:** Not started.
-- **Next up:** Step 0.1 (GitHub account + new repository).
-- **Last updated by:** — (fill in agent/session identifier + date on first update)
+- **Status:** In progress — Step 0.5 (continued) project scaffold complete. Steps 0.1-0.4 and 0.6-0.9 (account/env setup) are being handled directly by the user, outside the agent workflow, and are intentionally left `⬜ Not started` below until the user confirms them — do not attempt to redo the scaffold or re-ask for these.
+- **Next up:** Step 0.8 (`.env.local` + Vercel env vars) once the user has completed the account setup steps — then Step 1 (Database Schema & Drizzle Setup).
+- **Last updated by:** Claude Code session, 2026-09-05.
 - **Tech stack lock-in (must match `00_ScopeDocument.md` §12 — do not deviate without updating that doc too):** Next.js App Router + TypeScript, Tailwind CSS, shadcn/ui, Framer Motion + GSAP/ScrollTrigger + animate.css, Neon Postgres + Drizzle ORM, Auth.js (NextAuth v5), Stripe, Resend, Vercel.
 - **Component reuse/coding standards:** governed by `07_ComponentArchitectureAndStandards.md` — re-read it before building or extending any shared component (Navbar, Footer, ArticleCard, AuthModal, SearchOverlay, dashboard shell, application-state components, etc.).
 
@@ -45,7 +45,7 @@
 | 0.3 Vercel account | ⬜ Not started | | |
 | 0.4 Neon account + project | ⬜ Not started | | |
 | 0.5 Stripe account + keys + Connect | ⬜ Not started | | |
-| 0.5 (continued) Project scaffold | ⬜ Not started | | |
+| 0.5 (continued) Project scaffold | ✅ Done | Ran `create-next-app` (TS, Tailwind, App Router, src dir, `@/*` alias, ESLint), `shadcn@latest init`, and installed all listed deps (framer-motion, gsap, drizzle-orm, @neondatabase/serverless, drizzle-kit (dev), next-auth@beta, stripe, @stripe/stripe-js, resend, @react-email/components, zod, react-hook-form, @hookform/resolvers, lucide-react, animate.css, clsx, tailwind-merge, class-variance-authority). Copied `docs/` and `Refrence/` into the project root. `npm run build` succeeds with zero errors. Git initialized by create-next-app; a second commit added the shadcn/deps/docs changes. | Repo was NOT pushed to GitHub and no remote was set — user is completing Steps 0.1-0.4/0.6-0.9 (accounts, GitHub repo, env vars) themselves outside this workflow. When the user provides the GitHub repo URL, still need to: set the remote and push. `.env.local`/`.env.example` not yet created (Step 0.8, pending user). |
 | 0.6 Resend account + API key | ⬜ Not started | | |
 | 0.7 Auth.js secret | ⬜ Not started | | |
 | 0.8 `.env.local` + Vercel env vars | ⬜ Not started | | |
