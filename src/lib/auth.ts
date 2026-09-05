@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { db } from "./db";
 import { users, accounts, sessions, verificationTokens } from "../../drizzle/schema/index";
+import { generateOtp } from "./otp";
 
 // Auth.js v5 with the Drizzle adapter, per docs/00_ScopeDocument.md
 // Sections 2 and 12. Session strategy is "jwt" (required for the
@@ -43,6 +44,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const valid = await bcrypt.compare(password, user.passwordHash);
         if (!valid) return null;
 
+        // Author/Admin require email-OTP 2FA on every login per
+        // docs/00_ScopeDocument.md Section 2 and Flow C — fire the code
+        // now so it's already in the user's inbox by the time they reach
+        // /verify-otp. Readers skip this entirely (see the jwt callback
+        // below, which marks them twoFactorVerified immediately).
+        if (user.role === "author" || user.role === "admin") {
+          try {
+            await generateOtp(user.id);
+          } catch {
+            // Don't block sign-in over a transient email-provider
+            // failure — the /verify-otp page offers its own resend
+            // action (rate-limited to once per 60s) so the user isn't
+            // stuck if this first send fails.
+          }
+        }
+
         return {
           id: user.id,
           email: user.email,
@@ -61,7 +78,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.role = user.role;
         token.emailVerified = user.emailVerified ?? null;
         token.status = user.status;
-        token.twoFactorVerified = false;
+        // Readers never need 2FA — treat them as already verified so
+        // permission checks can gate uniformly on this one flag rather
+        // than special-casing role everywhere. Author/Admin start false
+        // and must complete /verify-otp (Step 2.4) to flip it.
+        token.twoFactorVerified = user.role === "reader";
       }
       // Allows a server-side session.update() call (used by the OTP
       // step in Step 2.4) to flip twoFactorVerified without re-issuing

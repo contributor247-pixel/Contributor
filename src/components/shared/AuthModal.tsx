@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { X } from "lucide-react";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 import { signupAction } from "@/lib/actions/auth";
 import { loginSchema, signupSchema } from "@/lib/validators/auth";
@@ -119,6 +120,7 @@ function LoginForm({
   onSuccess: () => void;
   onSwitchToSignup: () => void;
 }) {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -154,6 +156,18 @@ function LoginForm({
           : "Something went wrong. Please try again."
       );
       return;
+    }
+
+    const session = await getSession();
+    // Navigate before closing the modal — closing flips useAuthModal's
+    // isOpen to false, which unmounts this component's subtree
+    // immediately (it's nested inside AnimatePresence, but not as a
+    // direct motion child, so React doesn't defer the unmount for the
+    // exit animation the way it would for a top-level animated child).
+    // Calling router.push after that unmount was intermittently dropping
+    // the navigation.
+    if (session?.user && !session.user.twoFactorVerified) {
+      router.push("/verify-otp");
     }
     onSuccess();
   };
