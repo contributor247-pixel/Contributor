@@ -9,6 +9,10 @@ export const users = pgTable("users", {
   passwordHash: text("password_hash"),
   name: text("name"),
   avatarUrl: text("avatar_url"),
+  // Reserved for Auth.js's Drizzle adapter (OAuth provider avatar sync);
+  // the app's own UI reads avatarUrl above, never this column directly.
+  // Not part of docs/00_ScopeDocument.md's content model.
+  image: text("image"),
   role: userRoleEnum("role").notNull().default("reader"),
   emailVerified: timestamp("email_verified", { mode: "date" }),
   twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
