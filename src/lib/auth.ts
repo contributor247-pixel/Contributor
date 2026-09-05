@@ -1,4 +1,5 @@
 import NextAuth from "next-auth";
+import { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import bcrypt from "bcryptjs";
@@ -6,6 +7,34 @@ import { eq } from "drizzle-orm";
 import { db } from "./db";
 import { users, accounts, sessions, verificationTokens } from "../../drizzle/schema/index";
 import { generateOtp } from "./otp";
+
+// Session length is a single fixed value for everyone. docs/04_Master
+// BuildGuide.md's Step 2.5 asks for "Remember Me" to extend session
+// length, but Auth.js v5's session.maxAge/cookie expiry is a single
+// static config value used for every session's displayed `expires` and
+// actual cookie lifetime (see @auth/core/lib/actions/session.js) — it
+// cannot vary per sign-in through the normal config surface. A custom
+// jwt.encode() with a shorter internal token `exp` was tried and
+// rejected: the cookie and the session's displayed expiry would still
+// both claim the full 30 days regardless of the checkbox, while the
+// token quietly stopped decrypting early — a confusing, half-working
+// result. The "Remember Me" checkbox stays in the UI (matches the
+// design reference) but does not currently change session length;
+// everyone gets the one maxAge below.
+const SESSION_MAX_AGE = 30 * 24 * 60 * 60; // 30 days
+
+// Distinct error codes so the client can show the right inline message
+// per docs/04_MasterBuildGuide.md Step 2.5, instead of a single generic
+// "invalid credentials" for every failure mode.
+class InvalidCredentialsError extends CredentialsSignin {
+  code = "invalid-credentials";
+}
+class EmailNotVerifiedError extends CredentialsSignin {
+  code = "email-not-verified";
+}
+class AccountSuspendedError extends CredentialsSignin {
+  code = "account-suspended";
+}
 
 // Auth.js v5 with the Drizzle adapter, per docs/00_ScopeDocument.md
 // Sections 2 and 12. Session strategy is "jwt" (required for the
@@ -22,7 +51,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     sessionsTable: sessions,
     verificationTokensTable: verificationTokens,
   }),
-  session: { strategy: "jwt" },
+  session: { strategy: "jwt", maxAge: SESSION_MAX_AGE },
   providers: [
     Credentials({
       credentials: {
@@ -32,17 +61,29 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       authorize: async (credentials) => {
         const email = credentials?.email as string | undefined;
         const password = credentials?.password as string | undefined;
-        if (!email || !password) return null;
+        if (!email || !password) throw new InvalidCredentialsError();
 
         const [user] = await db
           .select()
           .from(users)
           .where(eq(users.email, email))
           .limit(1);
-        if (!user || !user.passwordHash) return null;
+        if (!user || !user.passwordHash) throw new InvalidCredentialsError();
 
         const valid = await bcrypt.compare(password, user.passwordHash);
-        if (!valid) return null;
+        if (!valid) throw new InvalidCredentialsError();
+
+        // Suspended accounts are blocked outright, per
+        // docs/00_ScopeDocument.md's Admin capabilities — checked before
+        // email verification since being suspended is the more severe,
+        // and more final, reason sign-in is refused.
+        if (user.status === "suspended") {
+          throw new AccountSuspendedError();
+        }
+
+        if (!user.emailVerified) {
+          throw new EmailNotVerifiedError();
+        }
 
         // Author/Admin require email-OTP 2FA on every login per
         // docs/00_ScopeDocument.md Section 2 and Flow C — fire the code
@@ -73,7 +114,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   callbacks: {
     jwt: async ({ token, user, trigger, session }) => {
-      if (user) {
+      if (user?.id) {
         token.id = user.id;
         token.role = user.role;
         token.emailVerified = user.emailVerified ?? null;

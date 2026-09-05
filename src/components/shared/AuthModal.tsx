@@ -8,6 +8,7 @@ import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 import { signupAction } from "@/lib/actions/auth";
+import { resendVerificationAction } from "@/lib/actions/verify-email";
 import { loginSchema, signupSchema } from "@/lib/validators/auth";
 
 const modalVariants = {
@@ -126,11 +127,14 @@ function LoginForm({
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
+  const [showResendLink, setShowResendLink] = useState(false);
+  const [resendState, setResendState] = useState<"idle" | "sending" | "sent">("idle");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
+    setShowResendLink(false);
     const parsed = loginSchema.safeParse({ email, password, rememberMe });
     if (!parsed.success) {
       const fieldErrors: Record<string, string> = {};
@@ -143,6 +147,9 @@ function LoginForm({
     }
     setErrors({});
     setIsSubmitting(true);
+    // Remember Me is not currently wired to session length — see the
+    // comment on SESSION_MAX_AGE in src/lib/auth.ts for why. The
+    // checkbox stays in the UI to match the design reference.
     const result = await signIn("credentials", {
       email,
       password,
@@ -150,11 +157,20 @@ function LoginForm({
     });
     setIsSubmitting(false);
     if (result?.error) {
-      setFormError(
-        result.error === "CredentialsSignin"
-          ? "Incorrect email or password."
-          : "Something went wrong. Please try again."
-      );
+      switch (result.code) {
+        case "email-not-verified":
+          setFormError("Please verify your email before signing in.");
+          setShowResendLink(true);
+          break;
+        case "account-suspended":
+          setFormError("Your account has been suspended, contact support.");
+          break;
+        case "invalid-credentials":
+          setFormError("Incorrect email or password.");
+          break;
+        default:
+          setFormError("Something went wrong. Please try again.");
+      }
       return;
     }
 
@@ -211,11 +227,28 @@ function LoginForm({
       </label>
 
       <FieldError message={formError ?? undefined} />
+      {showResendLink &&
+        (resendState === "sent" ? (
+          <p className="mt-1 text-sm text-[#1E8E5A]">Verification email sent — check your inbox.</p>
+        ) : (
+          <button
+            type="button"
+            disabled={resendState === "sending"}
+            onClick={async () => {
+              setResendState("sending");
+              await resendVerificationAction(email);
+              setResendState("sent");
+            }}
+            className="mt-1 text-sm text-[#111114] underline-offset-2 hover:underline disabled:text-[#B0AFAA]"
+          >
+            {resendState === "sending" ? "Sending..." : "Resend verification email"}
+          </button>
+        ))}
 
       <button
         type="submit"
         disabled={isSubmitting}
-        className="mt-2 h-12 w-full rounded-[4px] bg-[#111114] text-sm font-semibold text-white transition-colors hover:bg-[#C8102E] disabled:cursor-not-allowed disabled:bg-[#C9C9C9] disabled:text-[#8A8A8A]"
+        className="mt-4 h-12 w-full rounded-[4px] bg-[#111114] text-sm font-semibold text-white transition-colors hover:bg-[#C8102E] disabled:cursor-not-allowed disabled:bg-[#C9C9C9] disabled:text-[#8A8A8A]"
       >
         {isSubmitting ? "Signing in..." : "Sign in"}
       </button>
