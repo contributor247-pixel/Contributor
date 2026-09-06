@@ -6,6 +6,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Menu, X, Search, ShoppingBag, User } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useAuthModal } from "@/hooks/use-auth-modal";
+import { useSearchOverlay } from "@/hooks/use-search-overlay";
 
 const NAV_LINKS = [
   { href: "/", label: "Homepage" },
@@ -20,6 +21,7 @@ export function Navbar() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { data: session, status } = useSession();
   const { open } = useAuthModal();
+  const { open: openSearch } = useSearchOverlay();
   const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
@@ -78,6 +80,7 @@ export function Navbar() {
             <button
               type="button"
               aria-label="Search"
+              onClick={openSearch}
               className="flex h-10 w-10 items-center justify-center rounded-[4px] text-white transition-colors hover:bg-white/10"
             >
               <Search className="h-5 w-5" aria-hidden="true" />

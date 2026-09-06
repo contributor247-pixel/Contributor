@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import { Providers } from "@/components/shared/Providers";
+import { getPopularCategoryPills } from "@/lib/queries/articles";
 import "./globals.css";
 
 // Fraunces (display/serif) + Inter (body/sans), per
@@ -21,14 +22,16 @@ export const metadata: Metadata = {
   description: "A content publishing platform for writers and readers.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const popularPills = await getPopularCategoryPills(5);
+
   return (
     <html
       lang="en"
       className={`${fraunces.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Providers>{children}</Providers>
+        <Providers popularPills={popularPills}>{children}</Providers>
       </body>
     </html>
   );

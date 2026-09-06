@@ -10,7 +10,10 @@ export interface ArticleCardData {
   excerpt: string | null;
   coverImageUrl: string | null;
   isPremium: boolean;
-  publishedAt: Date | null;
+  // string when this data has round-tripped through a JSON API
+  // response (e.g. the search overlay's fetch), Date when it comes
+  // straight from a Server Component's DB query.
+  publishedAt: Date | string | null;
   category: { name: string; slug: string };
   author: { name: string | null; avatarUrl: string | null };
 }

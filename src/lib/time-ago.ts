@@ -1,6 +1,7 @@
-export function timeAgo(date: Date | null): string {
+export function timeAgo(date: Date | string | null): string {
   if (!date) return "";
-  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  const time = date instanceof Date ? date.getTime() : new Date(date).getTime();
+  const seconds = Math.floor((Date.now() - time) / 1000);
   const units: [number, string][] = [
     [31536000, "year"],
     [2592000, "month"],
