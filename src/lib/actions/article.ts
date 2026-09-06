@@ -34,6 +34,12 @@ async function resolveTagIds(tagNames: string[]): Promise<string[]> {
   return ids;
 }
 
+function buildExcerpt(body: string): string {
+  const plain = body.replace(/\s+/g, " ").trim();
+  if (plain.length <= 200) return plain;
+  return plain.slice(0, 200).replace(/\s+\S*$/, "") + "...";
+}
+
 async function generateUniqueSlug(title: string, excludeArticleId?: string): Promise<string> {
   const base = slugify(title) || "article";
   let candidate = base;
@@ -89,6 +95,7 @@ export async function createArticleAction(input: ArticleInput): Promise<ArticleA
       title: data.title,
       slug,
       body: { html: data.body },
+      excerpt: buildExcerpt(data.body),
       coverImageUrl: data.coverImageUrl ?? null,
       categoryId: data.categoryId,
       isPremium,
@@ -157,6 +164,7 @@ export async function updateArticleAction(
       title: data.title,
       slug,
       body: { html: data.body },
+      excerpt: buildExcerpt(data.body),
       coverImageUrl: data.coverImageUrl ?? null,
       categoryId: data.categoryId,
       isPremium,

@@ -1,4 +1,4 @@
-import { pgTable, uuid, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, timestamp, pgEnum } from "drizzle-orm/pg-core";
 import { users } from "./users";
 import { articles } from "./articles";
 
@@ -31,6 +31,7 @@ export const reports = pgTable("reports", {
     .notNull()
     .references(() => users.id),
   reason: reportReasonEnum("reason").notNull(),
+  detail: text("detail"),
   status: reportStatusEnum("status").notNull().default("open"),
   adminActionTaken: reportActionEnum("admin_action_taken"),
   actionedByUserId: uuid("actioned_by_user_id").references(() => users.id),

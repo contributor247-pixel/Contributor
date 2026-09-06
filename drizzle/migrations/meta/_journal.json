@@ -15,6 +15,13 @@
       "when": 1788602962165,
       "tag": "0001_chunky_colonel_america",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788718488868,
+      "tag": "0002_youthful_storm",
+      "breakpoints": true
     }
   ]
 }
