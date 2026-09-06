@@ -1,8 +1,15 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createArticleAction, updateArticleAction, searchAuthorsAction, type CoAuthorCandidate } from "@/lib/actions/article";
+import {
+  createArticleAction,
+  updateArticleAction,
+  searchAuthorsAction,
+  getPremiumEligibilityAction,
+  type CoAuthorCandidate,
+  type PremiumEligibility,
+} from "@/lib/actions/article";
 import { articleSchema } from "@/lib/validators/article";
 
 interface Category {
@@ -22,6 +29,8 @@ interface ArticleFormProps {
     coAuthors: CoAuthorCandidate[];
     coverImageUrl: string | null;
     status: "draft" | "published";
+    isPremium: boolean;
+    priceCents: number | null;
   };
 }
 
@@ -39,11 +48,20 @@ export function ArticleForm({ mode, articleId, categories, initialValues }: Arti
   const [coAuthorResults, setCoAuthorResults] = useState<CoAuthorCandidate[]>([]);
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(initialValues?.coverImageUrl ?? null);
   const [coverImageError, setCoverImageError] = useState<string | null>(null);
+  const [isPremium, setIsPremium] = useState(initialValues?.isPremium ?? false);
+  const [priceInput, setPriceInput] = useState(
+    initialValues?.priceCents != null ? (initialValues.priceCents / 100).toFixed(2) : ""
+  );
+  const [eligibility, setEligibility] = useState<PremiumEligibility | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<"draft" | "published" | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    getPremiumEligibilityAction().then(setEligibility);
+  }, []);
 
   const addTag = (raw: string) => {
     const value = raw.trim();
@@ -105,6 +123,11 @@ export function ArticleForm({ mode, articleId, categories, initialValues }: Arti
     reader.readAsDataURL(file);
   };
 
+  const priceCents = (() => {
+    const parsed = Math.round(parseFloat(priceInput) * 100);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  })();
+
   const buildPayload = (status: "draft" | "published") => ({
     title,
     body,
@@ -113,6 +136,8 @@ export function ArticleForm({ mode, articleId, categories, initialValues }: Arti
     coAuthorIds: coAuthors.map((c) => c.id),
     coverImageUrl,
     status,
+    isPremium: isPremium && coAuthors.length === 0,
+    priceCents: isPremium && coAuthors.length === 0 ? priceCents : null,
   });
 
   const handleSubmit = async (status: "draft" | "published") => {
@@ -250,6 +275,39 @@ export function ArticleForm({ mode, articleId, categories, initialValues }: Arti
           />
         )}
       </div>
+
+      {eligibility?.isAuthorPro && coAuthors.length === 0 && (
+        <div className="mb-6 rounded-[4px] border border-border-strong p-4">
+          <label className="flex items-center gap-2 text-sm font-medium text-text-body">
+            <input
+              type="checkbox"
+              checked={isPremium}
+              onChange={(e) => setIsPremium(e.target.checked)}
+              className="h-4 w-4 rounded border-border-strong"
+            />
+            Premium article
+          </label>
+          {isPremium && (
+            <div className="mt-3">
+              <label className="mb-1 block text-sm font-medium text-text-body">
+                Price (USD, ${(eligibility.minPriceCents / 100).toFixed(2)}–$
+                {(eligibility.maxPriceCents / 100).toFixed(2)})
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min={eligibility.minPriceCents / 100}
+                max={eligibility.maxPriceCents / 100}
+                value={priceInput}
+                onChange={(e) => setPriceInput(e.target.value)}
+                placeholder="4.99"
+                className="h-11 w-40 rounded-[4px] border border-border-strong px-3 text-sm text-text-body focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-[#11111414]"
+              />
+              {errors.priceCents && <p className="mt-1 text-sm text-error">{errors.priceCents}</p>}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="mb-6">
         <label className="mb-1 block text-sm font-medium text-text-body">Co-authors (joint authorship)</label>

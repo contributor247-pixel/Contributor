@@ -2,7 +2,7 @@ import type { Session } from "next-auth";
 import { and, eq, gt } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { subscriptions } from "../../drizzle/schema/index";
+import { subscriptions, purchases } from "../../drizzle/schema/index";
 
 export class UnauthenticatedError extends Error {
   constructor() {
@@ -107,4 +107,63 @@ export async function requireVerifiedAuthor(): Promise<Session> {
     throw new ForbiddenError("Two-factor verification not completed");
   }
   return session;
+}
+
+/**
+ * Whether the given user (or an anonymous visitor, if userId is null)
+ * has qualifying access to a Premium article: a purchase record, an
+ * active subscription to the article's Publication, or an active
+ * platform-wide subscription. Any one suffices per
+ * docs/00_ScopeDocument.md Section 6's access rule. Free articles
+ * always return true without a DB round-trip. This is a plain boolean
+ * check, not a require*() throw-on-failure guard, since the single
+ * article page needs to render a paywall rather than redirect/404 for
+ * a Premium article the viewer doesn't yet have access to.
+ */
+export async function hasArticleAccess(
+  userId: string | null,
+  article: { isPremium: boolean; id: string; publicationId: string | null }
+): Promise<boolean> {
+  if (!article.isPremium) return true;
+  if (!userId) return false;
+
+  const [purchase] = await db
+    .select({ id: purchases.id })
+    .from(purchases)
+    .where(and(eq(purchases.userId, userId), eq(purchases.articleId, article.id)))
+    .limit(1);
+  if (purchase) return true;
+
+  const [platformSub] = await db
+    .select({ id: subscriptions.id })
+    .from(subscriptions)
+    .where(
+      and(
+        eq(subscriptions.userId, userId),
+        eq(subscriptions.type, "platform"),
+        eq(subscriptions.status, "active"),
+        gt(subscriptions.currentPeriodEnd, new Date())
+      )
+    )
+    .limit(1);
+  if (platformSub) return true;
+
+  if (article.publicationId) {
+    const [pubSub] = await db
+      .select({ id: subscriptions.id })
+      .from(subscriptions)
+      .where(
+        and(
+          eq(subscriptions.userId, userId),
+          eq(subscriptions.type, "publication"),
+          eq(subscriptions.publicationId, article.publicationId),
+          eq(subscriptions.status, "active"),
+          gt(subscriptions.currentPeriodEnd, new Date())
+        )
+      )
+      .limit(1);
+    if (pubSub) return true;
+  }
+
+  return false;
 }

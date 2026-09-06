@@ -1,27 +1,60 @@
 import { notFound } from "next/navigation";
 import { getArticleBySlug, getRecentArticles } from "@/lib/queries/articles";
 import { getCommentsForArticle } from "@/lib/actions/comment";
+import { auth } from "@/lib/auth";
+import { hasArticleAccess } from "@/lib/permissions";
+import { stripe } from "@/lib/stripe";
 import { Avatar } from "@/components/shared/Avatar";
 import { CategoryPill } from "@/components/shared/CategoryPill";
 import { ArticleCard } from "@/components/shared/ArticleCard";
 import { CommentSection } from "@/components/article/CommentSection";
 import { ReportDialog } from "@/components/article/ReportDialog";
+import { PaywallCard } from "@/components/article/PaywallCard";
 import { timeAgo } from "@/lib/time-ago";
 
 interface ArticlePageProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ session_id?: string }>;
 }
 
-export default async function ArticlePage({ params }: ArticlePageProps) {
+// Optimistic unlock: right after a successful Stripe Checkout
+// redirect, the webhook that writes the real `purchases` row may not
+// have landed yet. Rather than make the buyer wait on that race, we
+// verify the Checkout Session directly with Stripe (paid, matches
+// this article/user) and treat that as sufficient access for this
+// render — the webhook still reconciles the permanent purchases/
+// ledger rows independently and is the source of truth for every
+// later visit.
+async function hasOptimisticAccess(sessionId: string | undefined, articleId: string, userId: string | undefined): Promise<boolean> {
+  if (!sessionId || !userId) return false;
+  try {
+    const checkoutSession = await stripe.checkout.sessions.retrieve(sessionId);
+    return (
+      checkoutSession.payment_status === "paid" &&
+      checkoutSession.metadata?.articleId === articleId &&
+      checkoutSession.metadata?.userId === userId
+    );
+  } catch {
+    return false;
+  }
+}
+
+export default async function ArticlePage({ params, searchParams }: ArticlePageProps) {
   const { slug } = await params;
+  const { session_id: sessionId } = await searchParams;
   const article = await getArticleBySlug(slug);
   if (!article) notFound();
 
-  const [comments, related] = await Promise.all([
+  const session = await auth();
+
+  const [comments, related, dbAccess, optimisticAccess] = await Promise.all([
     getCommentsForArticle(article.id),
     getRecentArticles(4, article.id),
+    hasArticleAccess(session?.user?.id ?? null, article),
+    hasOptimisticAccess(sessionId, article.id, session?.user?.id),
   ]);
 
+  const hasAccess = dbAccess || optimisticAccess;
   const bodyHtml = (article.body as { html?: string } | null)?.html ?? "";
   const primaryAuthor = article.authors[0];
   const byline = article.authors.map((a) => a.name ?? "Unknown").join(" & ");
@@ -51,10 +84,26 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         />
       )}
 
-      <div
-        className="prose prose-neutral mt-8 max-w-none whitespace-pre-wrap text-text-body"
-        dangerouslySetInnerHTML={{ __html: bodyHtml }}
-      />
+      {article.isPremium && !hasAccess ? (
+        <div className="relative mt-8">
+          <div className="relative max-h-[420px] overflow-hidden">
+            <div
+              className="prose prose-neutral max-w-none whitespace-pre-wrap text-text-body"
+              dangerouslySetInnerHTML={{ __html: bodyHtml }}
+            />
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-[200px] bg-gradient-to-t from-white to-transparent"
+              aria-hidden="true"
+            />
+          </div>
+          <PaywallCard articleId={article.id} priceCents={article.priceCents ?? 0} />
+        </div>
+      ) : (
+        <div
+          className="prose prose-neutral mt-8 max-w-none whitespace-pre-wrap text-text-body"
+          dangerouslySetInnerHTML={{ __html: bodyHtml }}
+        />
+      )}
 
       <div className="mt-8 border-t border-border pt-4">
         <ReportDialog articleId={article.id} />

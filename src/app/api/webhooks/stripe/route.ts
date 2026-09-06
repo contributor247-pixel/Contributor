@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { subscriptions } from "../../../../../drizzle/schema/index";
+import { purchases, subscriptions } from "../../../../../drizzle/schema/index";
 import { stripe } from "@/lib/stripe";
+import { calculateAndRecordSplit } from "@/lib/revenue-split";
 
 function statusFromStripe(status: Stripe.Subscription.Status): "active" | "cancelled" | "past_due" {
   if (status === "active" || status === "trialing") return "active";
@@ -74,6 +75,31 @@ export async function POST(request: Request) {
         if (userId && stripeSubscriptionId) {
           const stripeSubscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
           await upsertSubscriptionFromStripe(stripeSubscription, userId);
+        }
+      } else if (checkoutSession.mode === "payment" && checkoutSession.metadata?.purchaseType === "article") {
+        const { articleId, userId } = checkoutSession.metadata;
+        const paymentIntentId =
+          typeof checkoutSession.payment_intent === "string"
+            ? checkoutSession.payment_intent
+            : checkoutSession.payment_intent?.id ?? null;
+        if (articleId && userId && checkoutSession.amount_total != null && paymentIntentId) {
+          const [existing] = await db
+            .select({ id: purchases.id })
+            .from(purchases)
+            .where(eq(purchases.stripePaymentIntentId, paymentIntentId))
+            .limit(1);
+          if (!existing) {
+            const [purchase] = await db
+              .insert(purchases)
+              .values({
+                userId,
+                articleId,
+                amountCents: checkoutSession.amount_total,
+                stripePaymentIntentId: paymentIntentId,
+              })
+              .returning();
+            await calculateAndRecordSplit(articleId, checkoutSession.amount_total, "purchase", purchase.id);
+          }
         }
       }
       break;

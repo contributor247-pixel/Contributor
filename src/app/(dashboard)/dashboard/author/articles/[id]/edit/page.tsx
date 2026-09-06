@@ -50,6 +50,8 @@ export default async function EditArticlePage({ params }: { params: Promise<{ id
           .map((row) => ({ id: row.userId, name: row.name, email: row.email })),
         coverImageUrl: article.coverImageUrl,
         status: article.status === "published" ? "published" : "draft",
+        isPremium: article.isPremium,
+        priceCents: article.priceCents,
       }}
     />
   );

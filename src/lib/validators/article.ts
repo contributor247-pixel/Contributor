@@ -8,6 +8,8 @@ export const articleSchema = z.object({
   coAuthorIds: z.array(z.string().uuid()).max(5, "Too many co-authors"),
   coverImageUrl: z.string().optional().nullable(),
   status: z.enum(["draft", "published"]),
+  isPremium: z.boolean(),
+  priceCents: z.number().int().positive().optional().nullable(),
 });
 
 export type ArticleInput = z.infer<typeof articleSchema>;

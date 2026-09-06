@@ -173,6 +173,8 @@ export async function getArticleBySlug(slug: string) {
       excerpt: articles.excerpt,
       coverImageUrl: articles.coverImageUrl,
       isPremium: articles.isPremium,
+      priceCents: articles.priceCents,
+      publicationId: articles.publicationId,
       status: articles.status,
       publishedAt: articles.publishedAt,
       categoryName: categories.name,

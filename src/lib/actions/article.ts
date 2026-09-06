@@ -8,6 +8,7 @@ import {
   articleTags,
   tags,
   users,
+  platformConfig,
 } from "../../../drizzle/schema/index";
 import { requireVerifiedAuthor, requireAuthorPro } from "@/lib/permissions";
 import { articleSchema, type ArticleInput } from "@/lib/validators/article";
@@ -63,6 +64,36 @@ function resolveIsPremium(requestedPremium: boolean, hasCoAuthors: boolean): boo
   return hasCoAuthors ? false : requestedPremium;
 }
 
+// Resolves the final isPremium/priceCents pair server-side: only an
+// active AuthorPro account (checked fresh, never trusting client
+// state) may set isPremium=true, and the price must fall within the
+// admin-configured pay-per-article bounds. Any violation silently
+// downgrades to a free article rather than erroring, since the
+// article itself is still valid content — just not monetizable as
+// requested.
+async function resolvePremiumFields(
+  requestedPremium: boolean,
+  requestedPriceCents: number | null | undefined,
+  hasCoAuthors: boolean
+): Promise<{ isPremium: boolean; priceCents: number | null }> {
+  let isPremium = resolveIsPremium(requestedPremium, hasCoAuthors);
+  if (!isPremium) return { isPremium: false, priceCents: null };
+
+  try {
+    await requireAuthorPro();
+  } catch {
+    return { isPremium: false, priceCents: null };
+  }
+
+  const [config] = await db.select().from(platformConfig).limit(1);
+  const price = requestedPriceCents ?? 0;
+  if (!config || price < config.payPerArticleMinCents || price > config.payPerArticleMaxCents) {
+    return { isPremium: false, priceCents: null };
+  }
+
+  return { isPremium: true, priceCents: price };
+}
+
 export async function createArticleAction(input: ArticleInput): Promise<ArticleActionResult> {
   const session = await requireVerifiedAuthor();
   const parsed = articleSchema.safeParse(input);
@@ -71,20 +102,8 @@ export async function createArticleAction(input: ArticleInput): Promise<ArticleA
   }
   const data = parsed.data;
 
-  // The Premium toggle itself doesn't exist in this step's form yet
-  // (Step 8 adds it) — isPremium is always false coming from this form,
-  // but the resolveIsPremium/requireAuthorPro enforcement already
-  // exists here so it's in place before the UI is, per the guide's
-  // explicit "enforce server-side too" instruction for Section 3.
   const hasCoAuthors = data.coAuthorIds.length > 0;
-  let isPremium = resolveIsPremium(false, hasCoAuthors);
-  if (isPremium) {
-    try {
-      await requireAuthorPro();
-    } catch {
-      isPremium = false;
-    }
-  }
+  const { isPremium, priceCents } = await resolvePremiumFields(data.isPremium, data.priceCents, hasCoAuthors);
 
   const slug = await generateUniqueSlug(data.title);
   const tagIds = await resolveTagIds(data.tags);
@@ -99,6 +118,7 @@ export async function createArticleAction(input: ArticleInput): Promise<ArticleA
       coverImageUrl: data.coverImageUrl ?? null,
       categoryId: data.categoryId,
       isPremium,
+      priceCents,
       status: data.status,
       publishedAt: data.status === "published" ? new Date() : null,
     })
@@ -144,15 +164,7 @@ export async function updateArticleAction(
   }
 
   const hasCoAuthors = data.coAuthorIds.length > 0;
-  let isPremium = existing.isPremium;
-  isPremium = resolveIsPremium(isPremium, hasCoAuthors);
-  if (isPremium) {
-    try {
-      await requireAuthorPro();
-    } catch {
-      isPremium = false;
-    }
-  }
+  const { isPremium, priceCents } = await resolvePremiumFields(data.isPremium, data.priceCents, hasCoAuthors);
 
   const slug =
     data.title === existing.title ? existing.slug : await generateUniqueSlug(data.title, articleId);
@@ -168,6 +180,7 @@ export async function updateArticleAction(
       coverImageUrl: data.coverImageUrl ?? null,
       categoryId: data.categoryId,
       isPremium,
+      priceCents,
       status: data.status,
       publishedAt: data.status === "published" && !existing.publishedAt ? new Date() : existing.publishedAt,
       updatedAt: new Date(),
@@ -214,6 +227,33 @@ export async function deleteArticleAction(articleId: string): Promise<DeleteArti
     .where(eq(articles.id, articleId));
 
   return { success: true };
+}
+
+export type PremiumEligibility = {
+  isAuthorPro: boolean;
+  minPriceCents: number;
+  maxPriceCents: number;
+};
+
+// Called by the article form to decide whether to show the Premium
+// toggle at all. Purely informational for the UI — the actions above
+// re-check requireAuthorPro() and the price bounds themselves on
+// every save, so a stale/forged client value here can never bypass
+// enforcement.
+export async function getPremiumEligibilityAction(): Promise<PremiumEligibility> {
+  await requireVerifiedAuthor();
+  let isAuthorPro = true;
+  try {
+    await requireAuthorPro();
+  } catch {
+    isAuthorPro = false;
+  }
+  const [config] = await db.select().from(platformConfig).limit(1);
+  return {
+    isAuthorPro,
+    minPriceCents: config?.payPerArticleMinCents ?? 99,
+    maxPriceCents: config?.payPerArticleMaxCents ?? 4999,
+  };
 }
 
 export type CoAuthorCandidate = { id: string; name: string | null; email: string };
