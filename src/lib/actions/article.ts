@@ -1,0 +1,230 @@
+"use server";
+
+import { eq, and, inArray } from "drizzle-orm";
+import { db } from "@/lib/db";
+import {
+  articles,
+  articleAuthors,
+  articleTags,
+  tags,
+  users,
+} from "../../../drizzle/schema/index";
+import { requireVerifiedAuthor, requireAuthorPro } from "@/lib/permissions";
+import { articleSchema, type ArticleInput } from "@/lib/validators/article";
+import { slugify } from "@/lib/slugify";
+
+export type ArticleActionResult =
+  | { success: true; articleId: string; slug: string }
+  | { success: false; error: string };
+
+async function resolveTagIds(tagNames: string[]): Promise<string[]> {
+  const ids: string[] = [];
+  for (const rawName of tagNames) {
+    const name = rawName.trim();
+    if (!name) continue;
+    const slug = slugify(name);
+    const [existing] = await db.select().from(tags).where(eq(tags.slug, slug)).limit(1);
+    if (existing) {
+      ids.push(existing.id);
+      continue;
+    }
+    const [created] = await db.insert(tags).values({ name, slug }).returning();
+    ids.push(created.id);
+  }
+  return ids;
+}
+
+async function generateUniqueSlug(title: string, excludeArticleId?: string): Promise<string> {
+  const base = slugify(title) || "article";
+  let candidate = base;
+  let suffix = 1;
+  for (;;) {
+    const [existing] = await db
+      .select({ id: articles.id })
+      .from(articles)
+      .where(eq(articles.slug, candidate))
+      .limit(1);
+    if (!existing || existing.id === excludeArticleId) return candidate;
+    suffix += 1;
+    candidate = `${base}-${suffix}`;
+  }
+}
+
+// Joint authorship is always free per docs/00_ScopeDocument.md Section
+// 7.1 — this is a hard server-side rule with no UI or API path around
+// it, checked here regardless of what the caller requested.
+function resolveIsPremium(requestedPremium: boolean, hasCoAuthors: boolean): boolean {
+  return hasCoAuthors ? false : requestedPremium;
+}
+
+export async function createArticleAction(input: ArticleInput): Promise<ArticleActionResult> {
+  const session = await requireVerifiedAuthor();
+  const parsed = articleSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+  const data = parsed.data;
+
+  // The Premium toggle itself doesn't exist in this step's form yet
+  // (Step 8 adds it) — isPremium is always false coming from this form,
+  // but the resolveIsPremium/requireAuthorPro enforcement already
+  // exists here so it's in place before the UI is, per the guide's
+  // explicit "enforce server-side too" instruction for Section 3.
+  const hasCoAuthors = data.coAuthorIds.length > 0;
+  let isPremium = resolveIsPremium(false, hasCoAuthors);
+  if (isPremium) {
+    try {
+      await requireAuthorPro();
+    } catch {
+      isPremium = false;
+    }
+  }
+
+  const slug = await generateUniqueSlug(data.title);
+  const tagIds = await resolveTagIds(data.tags);
+
+  const [article] = await db
+    .insert(articles)
+    .values({
+      title: data.title,
+      slug,
+      body: { html: data.body },
+      coverImageUrl: data.coverImageUrl ?? null,
+      categoryId: data.categoryId,
+      isPremium,
+      status: data.status,
+      publishedAt: data.status === "published" ? new Date() : null,
+    })
+    .returning();
+
+  const authorRows = [
+    { articleId: article.id, userId: session.user.id, isPrimary: true },
+    ...data.coAuthorIds
+      .filter((id) => id !== session.user.id)
+      .map((id) => ({ articleId: article.id, userId: id, isPrimary: false })),
+  ];
+  await db.insert(articleAuthors).values(authorRows);
+
+  if (tagIds.length > 0) {
+    await db.insert(articleTags).values(tagIds.map((tagId) => ({ articleId: article.id, tagId })));
+  }
+
+  return { success: true, articleId: article.id, slug: article.slug };
+}
+
+export async function updateArticleAction(
+  articleId: string,
+  input: ArticleInput
+): Promise<ArticleActionResult> {
+  const session = await requireVerifiedAuthor();
+  const parsed = articleSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+  const data = parsed.data;
+
+  const [existing] = await db.select().from(articles).where(eq(articles.id, articleId)).limit(1);
+  if (!existing) {
+    return { success: false, error: "Article not found" };
+  }
+  const authorRows = await db
+    .select()
+    .from(articleAuthors)
+    .where(eq(articleAuthors.articleId, articleId));
+  const isOwnArticle = authorRows.some((row) => row.userId === session.user.id);
+  if (!isOwnArticle) {
+    return { success: false, error: "You do not have permission to edit this article" };
+  }
+
+  const hasCoAuthors = data.coAuthorIds.length > 0;
+  let isPremium = existing.isPremium;
+  isPremium = resolveIsPremium(isPremium, hasCoAuthors);
+  if (isPremium) {
+    try {
+      await requireAuthorPro();
+    } catch {
+      isPremium = false;
+    }
+  }
+
+  const slug =
+    data.title === existing.title ? existing.slug : await generateUniqueSlug(data.title, articleId);
+  const tagIds = await resolveTagIds(data.tags);
+
+  await db
+    .update(articles)
+    .set({
+      title: data.title,
+      slug,
+      body: { html: data.body },
+      coverImageUrl: data.coverImageUrl ?? null,
+      categoryId: data.categoryId,
+      isPremium,
+      status: data.status,
+      publishedAt: data.status === "published" && !existing.publishedAt ? new Date() : existing.publishedAt,
+      updatedAt: new Date(),
+    })
+    .where(eq(articles.id, articleId));
+
+  await db.delete(articleAuthors).where(eq(articleAuthors.articleId, articleId));
+  const newAuthorRows = [
+    { articleId, userId: session.user.id, isPrimary: true },
+    ...data.coAuthorIds
+      .filter((id) => id !== session.user.id)
+      .map((id) => ({ articleId, userId: id, isPrimary: false })),
+  ];
+  await db.insert(articleAuthors).values(newAuthorRows);
+
+  await db.delete(articleTags).where(eq(articleTags.articleId, articleId));
+  if (tagIds.length > 0) {
+    await db.insert(articleTags).values(tagIds.map((tagId) => ({ articleId, tagId })));
+  }
+
+  return { success: true, articleId, slug };
+}
+
+export type DeleteArticleResult = { success: true } | { success: false; error: string };
+
+// Soft delete: sets status to "unpublished" (hidden from public) rather
+// than removing the row, so ledger/report history integrity is
+// preserved for anything already monetized, per the guide's explicit
+// instruction.
+export async function deleteArticleAction(articleId: string): Promise<DeleteArticleResult> {
+  const session = await requireVerifiedAuthor();
+  const authorRows = await db
+    .select()
+    .from(articleAuthors)
+    .where(eq(articleAuthors.articleId, articleId));
+  const isOwnArticle = authorRows.some((row) => row.userId === session.user.id);
+  if (!isOwnArticle) {
+    return { success: false, error: "You do not have permission to delete this article" };
+  }
+
+  await db
+    .update(articles)
+    .set({ status: "unpublished", updatedAt: new Date() })
+    .where(eq(articles.id, articleId));
+
+  return { success: true };
+}
+
+export type CoAuthorCandidate = { id: string; name: string | null; email: string };
+
+export async function searchAuthorsAction(query: string): Promise<CoAuthorCandidate[]> {
+  const session = await requireVerifiedAuthor();
+  if (!query.trim()) return [];
+
+  const rows = await db
+    .select({ id: users.id, name: users.name, email: users.email, role: users.role, status: users.status })
+    .from(users)
+    .where(inArray(users.role, ["author", "admin"]))
+    .limit(50);
+
+  const needle = query.trim().toLowerCase();
+  return rows
+    .filter((u) => u.status === "active")
+    .filter((u) => u.id !== session.user.id)
+    .filter((u) => (u.name ?? "").toLowerCase().includes(needle) || u.email.toLowerCase().includes(needle))
+    .slice(0, 10)
+    .map(({ id, name, email }) => ({ id, name, email }));
+}
