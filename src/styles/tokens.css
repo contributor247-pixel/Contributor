@@ -1,0 +1,56 @@
+/*
+ * Design tokens for Contributor, per docs/02_ThemeGuideline.md Section 2.
+ * The accent hue was refined from the theme doc's starting-point crimson
+ * (#C8102E) to a deeper oxblood/wine (#8B1E3F) — same boldness and usage
+ * rules, better contrast (8.92:1 vs 5.88:1 against white), and better
+ * harmony with a cool-toned ink than a warm red against a neutral black.
+ * User-confirmed via a side-by-side swatch/contrast comparison before
+ * being wired in here (see docs/06_ProjectState.md Step 3 decision log).
+ */
+
+:root {
+  /* Accent (oxblood) */
+  --color-primary: #8b1e3f;
+  --color-primary-hover: #6e1730;
+  --color-primary-subtle: #f1e4e7;
+
+  /* Ink neutrals */
+  --color-ink: #14141a;
+  --color-ink-soft: #1e1e26;
+
+  /* Backgrounds */
+  --color-bg: #ffffff;
+  --color-bg-muted: #f8f7f5;
+  --color-surface: #ffffff;
+
+  /* Borders */
+  --color-border: #e4e2dd;
+  --color-border-strong: #d1cec7;
+
+  /* Text ramp */
+  --color-text-heading: #14141a;
+  --color-text-body: #38383f;
+  --color-text-muted: #706f76;
+  --color-text-inverse: #ffffff;
+
+  /* Links */
+  --color-link: #14141a;
+  --color-link-hover: #8b1e3f;
+
+  /* Semantic */
+  --color-success: #1e8e5a;
+  --color-warning: #b8860b;
+  --color-error: #d93025;
+
+  /* Overlay */
+  --color-overlay-scrim: rgba(10, 10, 12, 0.72);
+
+  /* Dark mode (Phase 1 nice-to-have) */
+  --color-bg-dark: #0b0b0d;
+  --color-surface-dark: #17171a;
+  --color-text-heading-dark: #f5f4f2;
+  --color-text-body-dark: #c7c6c3;
+
+  /* Radius — sharp, editorial per Section 5; overrides shadcn's default */
+  --radius: 4px;
+}

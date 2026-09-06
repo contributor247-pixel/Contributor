@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "../styles/tokens.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -8,8 +9,40 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-serif: var(--font-serif);
+  --font-mono: ui-monospace, monospace;
+  --font-heading: var(--font-serif);
+
+  /* Contributor design tokens (src/styles/tokens.css), exposed as
+     Tailwind utilities: bg-ink, text-primary, border-border-strong, etc.
+     --color-primary/--color-border are shared names with shadcn's own
+     tokens below — intentionally: tokens.css's values ARE what --primary
+     and --border resolve to now (see the :root block), so shadcn
+     components (Button, Input, Dialog) automatically pick up the
+     Contributor palette instead of running two parallel systems. */
+  --color-primary-hover: var(--color-primary-hover);
+  --color-primary-subtle: var(--color-primary-subtle);
+  --color-ink: var(--color-ink);
+  --color-ink-soft: var(--color-ink-soft);
+  --color-bg: var(--color-bg);
+  --color-bg-muted: var(--color-bg-muted);
+  --color-surface: var(--color-surface);
+  --color-border-strong: var(--color-border-strong);
+  --color-text-heading: var(--color-text-heading);
+  --color-text-body: var(--color-text-body);
+  --color-text-muted: var(--color-text-muted);
+  --color-text-inverse: var(--color-text-inverse);
+  --color-link: var(--color-link);
+  --color-link-hover: var(--color-link-hover);
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-error: var(--color-error);
+  --color-overlay-scrim: var(--color-overlay-scrim);
+  --color-bg-dark: var(--color-bg-dark);
+  --color-surface-dark: var(--color-surface-dark);
+  --color-text-heading-dark: var(--color-text-heading-dark);
+  --color-text-body-dark: var(--color-text-body-dark);
+
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,30 +82,30 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --background: var(--color-bg);
+  --foreground: var(--color-text-body);
+  --card: var(--color-surface);
+  --card-foreground: var(--color-text-body);
+  --popover: var(--color-surface);
+  --popover-foreground: var(--color-text-body);
+  --primary: var(--color-ink);
+  --primary-foreground: var(--color-text-inverse);
+  --secondary: var(--color-bg-muted);
+  --secondary-foreground: var(--color-ink);
+  --muted: var(--color-bg-muted);
+  --muted-foreground: var(--color-text-muted);
+  --accent: var(--color-primary-subtle);
+  --accent-foreground: var(--color-primary);
+  --destructive: var(--color-error);
+  --border: var(--color-border);
+  --input: var(--color-border-strong);
+  --ring: var(--color-ink);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
+  /* --radius comes from tokens.css (4px, sharp/editorial per Section 5) */
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -84,21 +117,21 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
+  --background: var(--color-bg-dark);
+  --foreground: var(--color-text-body-dark);
+  --card: var(--color-surface-dark);
+  --card-foreground: var(--color-text-body-dark);
+  --popover: var(--color-surface-dark);
+  --popover-foreground: var(--color-text-body-dark);
+  --primary: var(--color-text-heading-dark);
+  --primary-foreground: var(--color-bg-dark);
+  --secondary: var(--color-surface-dark);
+  --secondary-foreground: var(--color-text-heading-dark);
+  --muted: var(--color-surface-dark);
   --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
+  --accent: var(--color-primary-subtle);
+  --accent-foreground: var(--color-primary);
+  --destructive: var(--color-error);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
