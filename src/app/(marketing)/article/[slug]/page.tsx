@@ -2,7 +2,9 @@ import { notFound } from "next/navigation";
 import { getArticleBySlug, getRecentArticles } from "@/lib/queries/articles";
 import { getCommentsForArticle } from "@/lib/actions/comment";
 import { auth } from "@/lib/auth";
-import { hasArticleAccess } from "@/lib/permissions";
+import { getArticleAccessSource } from "@/lib/permissions";
+import { logQualifyingRead } from "@/lib/revenue-split";
+import { getActivePublicationSubscriptionName } from "@/lib/actions/subscription";
 import { stripe } from "@/lib/stripe";
 import { Avatar } from "@/components/shared/Avatar";
 import { CategoryPill } from "@/components/shared/CategoryPill";
@@ -47,17 +49,33 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
 
   const session = await auth();
 
-  const [comments, related, dbAccess, optimisticAccess] = await Promise.all([
+  const [comments, related, accessResult, optimisticAccess] = await Promise.all([
     getCommentsForArticle(article.id),
     getRecentArticles(4, article.id),
-    hasArticleAccess(session?.user?.id ?? null, article),
+    getArticleAccessSource(session?.user?.id ?? null, article),
     hasOptimisticAccess(sessionId, article.id, session?.user?.id),
   ]);
 
-  const hasAccess = dbAccess || optimisticAccess;
+  const hasAccess = accessResult.granted || optimisticAccess;
+
+  // A qualifying read only needs logging for subscription-based access
+  // (Platform or Publication) — purchases are already fully attributed
+  // at purchase time, and free articles don't participate in the
+  // pooled-revenue split at all. Fire-and-forget: a logging failure
+  // must never break the page render for the reader.
+  if (accessResult.granted && (accessResult.source === "platform_subscription" || accessResult.source === "publication_subscription")) {
+    logQualifyingRead(session!.user.id, article.id, accessResult.billingPeriodStart).catch((err) => {
+      console.error("Failed to log qualifying read:", err);
+    });
+  }
   const bodyHtml = (article.body as { html?: string } | null)?.html ?? "";
   const primaryAuthor = article.authors[0];
   const byline = article.authors.map((a) => a.name ?? "Unknown").join(" & ");
+
+  const showPaywall = article.isPremium && !hasAccess;
+  const activePublicationSubName = showPaywall && session?.user
+    ? await getActivePublicationSubscriptionName(session.user.id)
+    : null;
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
@@ -84,7 +102,7 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
         />
       )}
 
-      {article.isPremium && !hasAccess ? (
+      {showPaywall ? (
         <div className="relative mt-8">
           <div className="relative max-h-[420px] overflow-hidden">
             <div
@@ -96,7 +114,13 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
               aria-hidden="true"
             />
           </div>
-          <PaywallCard articleId={article.id} priceCents={article.priceCents ?? 0} />
+          <PaywallCard
+            articleId={article.id}
+            priceCents={article.priceCents ?? 0}
+            publicationId={article.publicationId}
+            publicationName={article.publicationName}
+            activePublicationSubName={activePublicationSubName}
+          />
         </div>
       ) : (
         <div

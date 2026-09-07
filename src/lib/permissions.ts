@@ -120,22 +120,43 @@ export async function requireVerifiedAuthor(): Promise<Session> {
  * article page needs to render a paywall rather than redirect/404 for
  * a Premium article the viewer doesn't yet have access to.
  */
-export async function hasArticleAccess(
+export type ArticleAccessResult =
+  | { granted: true; source: "free" }
+  | { granted: true; source: "purchase" }
+  | { granted: true; source: "platform_subscription"; billingPeriodStart: Date }
+  | { granted: true; source: "publication_subscription"; billingPeriodStart: Date }
+  | { granted: false };
+
+/**
+ * Resolves how (if at all) the given user has qualifying access to a
+ * Premium article: a purchase record, an active platform-wide
+ * subscription, or an active subscription to the article's
+ * Publication. Any one suffices per docs/00_ScopeDocument.md Section
+ * 6's access rule. Free articles always grant access without a DB
+ * round-trip. Returns which source granted access (plus the
+ * subscription's currentPeriodStart, needed to bucket a qualifying
+ * read event for Step 10's pooled-revenue distribution) rather than a
+ * plain boolean, since a purchase and a subscription are handled very
+ * differently downstream — a purchase is already fully attributed at
+ * purchase time, while a subscription-based view must log a read
+ * event for later pooled distribution.
+ */
+export async function getArticleAccessSource(
   userId: string | null,
   article: { isPremium: boolean; id: string; publicationId: string | null }
-): Promise<boolean> {
-  if (!article.isPremium) return true;
-  if (!userId) return false;
+): Promise<ArticleAccessResult> {
+  if (!article.isPremium) return { granted: true, source: "free" };
+  if (!userId) return { granted: false };
 
   const [purchase] = await db
     .select({ id: purchases.id })
     .from(purchases)
     .where(and(eq(purchases.userId, userId), eq(purchases.articleId, article.id)))
     .limit(1);
-  if (purchase) return true;
+  if (purchase) return { granted: true, source: "purchase" };
 
   const [platformSub] = await db
-    .select({ id: subscriptions.id })
+    .select({ currentPeriodStart: subscriptions.currentPeriodStart })
     .from(subscriptions)
     .where(
       and(
@@ -146,11 +167,11 @@ export async function hasArticleAccess(
       )
     )
     .limit(1);
-  if (platformSub) return true;
+  if (platformSub) return { granted: true, source: "platform_subscription", billingPeriodStart: platformSub.currentPeriodStart };
 
   if (article.publicationId) {
     const [pubSub] = await db
-      .select({ id: subscriptions.id })
+      .select({ currentPeriodStart: subscriptions.currentPeriodStart })
       .from(subscriptions)
       .where(
         and(
@@ -162,8 +183,16 @@ export async function hasArticleAccess(
         )
       )
       .limit(1);
-    if (pubSub) return true;
+    if (pubSub) return { granted: true, source: "publication_subscription", billingPeriodStart: pubSub.currentPeriodStart };
   }
 
-  return false;
+  return { granted: false };
+}
+
+/** Plain boolean convenience wrapper around getArticleAccessSource(). */
+export async function hasArticleAccess(
+  userId: string | null,
+  article: { isPremium: boolean; id: string; publicationId: string | null }
+): Promise<boolean> {
+  return (await getArticleAccessSource(userId, article)).granted;
 }

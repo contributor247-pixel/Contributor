@@ -4,13 +4,23 @@ import { useState } from "react";
 import { Lock } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useAuthModal } from "@/hooks/use-auth-modal";
+import { SubscribeButton } from "@/components/billing/SubscribeButton";
 
 interface PaywallCardProps {
   articleId: string;
   priceCents: number;
+  publicationId?: string | null;
+  publicationName?: string | null;
+  activePublicationSubName?: string | null;
 }
 
-export function PaywallCard({ articleId, priceCents }: PaywallCardProps) {
+export function PaywallCard({
+  articleId,
+  priceCents,
+  publicationId,
+  publicationName,
+  activePublicationSubName,
+}: PaywallCardProps) {
   const { data: session } = useSession();
   const { open } = useAuthModal();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -61,6 +71,26 @@ export function PaywallCard({ articleId, priceCents }: PaywallCardProps) {
         >
           {isSubmitting ? "Redirecting to checkout..." : `Buy this article — $${(priceCents / 100).toFixed(2)}`}
         </button>
+        {publicationId && (
+          <SubscribeButton
+            type="publication"
+            interval="monthly"
+            publicationId={publicationId}
+            label={`Subscribe to ${publicationName ?? "this Publication"}`}
+            className="h-11 rounded-[4px] border border-border-strong text-sm font-semibold text-text-body transition-colors hover:bg-bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+          />
+        )}
+        <SubscribeButton
+          type="platform"
+          interval="monthly"
+          label="Subscribe to the Platform"
+          confirmMessage={
+            activePublicationSubName
+              ? `You have an active subscription to ${activePublicationSubName}. Subscribing to the Platform will cancel that subscription and replace it with full platform-wide access. Continue?`
+              : undefined
+          }
+          className="h-11 rounded-[4px] border border-border-strong text-sm font-semibold text-text-body transition-colors hover:bg-bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+        />
       </div>
     </div>
   );

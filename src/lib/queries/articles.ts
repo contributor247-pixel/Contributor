@@ -1,6 +1,6 @@
 import { and, count, desc, eq, ilike, inArray, ne, or } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { articles, articleAuthors, articleTags, categories, tags, users } from "../../../drizzle/schema/index";
+import { articles, articleAuthors, articleTags, categories, tags, users, publications } from "../../../drizzle/schema/index";
 import type { ArticleCardData } from "@/components/shared/ArticleCard";
 
 const PUBLISHED = eq(articles.status, "published");
@@ -175,6 +175,7 @@ export async function getArticleBySlug(slug: string) {
       isPremium: articles.isPremium,
       priceCents: articles.priceCents,
       publicationId: articles.publicationId,
+      publicationName: publications.name,
       status: articles.status,
       publishedAt: articles.publishedAt,
       categoryName: categories.name,
@@ -182,6 +183,7 @@ export async function getArticleBySlug(slug: string) {
     })
     .from(articles)
     .innerJoin(categories, eq(articles.categoryId, categories.id))
+    .leftJoin(publications, eq(articles.publicationId, publications.id))
     .where(and(eq(articles.slug, slug), PUBLISHED))
     .limit(1);
   if (!row) return null;
