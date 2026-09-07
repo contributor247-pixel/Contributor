@@ -10,6 +10,7 @@ import {
   type CoAuthorCandidate,
   type PremiumEligibility,
 } from "@/lib/actions/article";
+import { getSelectablePublicationsAction, type SelectablePublication } from "@/lib/actions/publication";
 import { articleSchema } from "@/lib/validators/article";
 
 interface Category {
@@ -31,6 +32,7 @@ interface ArticleFormProps {
     status: "draft" | "published";
     isPremium: boolean;
     priceCents: number | null;
+    publicationId: string | null;
   };
 }
 
@@ -53,6 +55,8 @@ export function ArticleForm({ mode, articleId, categories, initialValues }: Arti
     initialValues?.priceCents != null ? (initialValues.priceCents / 100).toFixed(2) : ""
   );
   const [eligibility, setEligibility] = useState<PremiumEligibility | null>(null);
+  const [publicationId, setPublicationId] = useState(initialValues?.publicationId ?? "");
+  const [selectablePublications, setSelectablePublications] = useState<SelectablePublication[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<"draft" | "published" | null>(null);
@@ -61,6 +65,7 @@ export function ArticleForm({ mode, articleId, categories, initialValues }: Arti
 
   useEffect(() => {
     getPremiumEligibilityAction().then(setEligibility);
+    getSelectablePublicationsAction().then(setSelectablePublications);
   }, []);
 
   const addTag = (raw: string) => {
@@ -138,6 +143,7 @@ export function ArticleForm({ mode, articleId, categories, initialValues }: Arti
     status,
     isPremium: isPremium && coAuthors.length === 0,
     priceCents: isPremium && coAuthors.length === 0 ? priceCents : null,
+    publicationId: publicationId || null,
   });
 
   const handleSubmit = async (status: "draft" | "published") => {
@@ -223,6 +229,24 @@ export function ArticleForm({ mode, articleId, categories, initialValues }: Arti
         )}
         {errors.categoryId && <p className="mt-1 text-sm text-error">{errors.categoryId}</p>}
       </div>
+
+      {selectablePublications.length > 0 && (
+        <div className="mb-4">
+          <label className="mb-1 block text-sm font-medium text-text-body">Publication (optional)</label>
+          <select
+            value={publicationId}
+            onChange={(e) => setPublicationId(e.target.value)}
+            className="h-12 w-full rounded-[4px] border border-border-strong bg-surface px-4 text-text-heading focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-[#11111414]"
+          >
+            <option value="">Standalone (not part of a Publication)</option>
+            {selectablePublications.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="mb-4">
         <label className="mb-1 block text-sm font-medium text-text-body">Tags</label>

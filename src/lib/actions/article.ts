@@ -9,6 +9,8 @@ import {
   tags,
   users,
   platformConfig,
+  publications,
+  invites,
 } from "../../../drizzle/schema/index";
 import { requireVerifiedAuthor, requireAuthorPro } from "@/lib/permissions";
 import { articleSchema, type ArticleInput } from "@/lib/validators/article";
@@ -94,6 +96,39 @@ async function resolvePremiumFields(
   return { isPremium: true, priceCents: price };
 }
 
+// Resolves and validates the requested Publication assignment
+// server-side: the caller must either own the Publication or hold an
+// accepted invite to it, per docs/04_MasterBuildGuide.md Step 9 point
+// 6 — a forged/stale publicationId from the client is silently
+// dropped (article saves as standalone) rather than erroring.
+async function resolvePublicationId(
+  requestedPublicationId: string | null | undefined,
+  userId: string
+): Promise<string | null> {
+  if (!requestedPublicationId) return null;
+
+  const [publication] = await db
+    .select({ ownerId: publications.ownerId })
+    .from(publications)
+    .where(eq(publications.id, requestedPublicationId))
+    .limit(1);
+  if (!publication) return null;
+  if (publication.ownerId === userId) return requestedPublicationId;
+
+  const [acceptedInvite] = await db
+    .select({ id: invites.id })
+    .from(invites)
+    .where(
+      and(
+        eq(invites.publicationId, requestedPublicationId),
+        eq(invites.invitedUserId, userId),
+        eq(invites.status, "accepted")
+      )
+    )
+    .limit(1);
+  return acceptedInvite ? requestedPublicationId : null;
+}
+
 export async function createArticleAction(input: ArticleInput): Promise<ArticleActionResult> {
   const session = await requireVerifiedAuthor();
   const parsed = articleSchema.safeParse(input);
@@ -104,6 +139,7 @@ export async function createArticleAction(input: ArticleInput): Promise<ArticleA
 
   const hasCoAuthors = data.coAuthorIds.length > 0;
   const { isPremium, priceCents } = await resolvePremiumFields(data.isPremium, data.priceCents, hasCoAuthors);
+  const publicationId = await resolvePublicationId(data.publicationId, session.user.id);
 
   const slug = await generateUniqueSlug(data.title);
   const tagIds = await resolveTagIds(data.tags);
@@ -117,6 +153,7 @@ export async function createArticleAction(input: ArticleInput): Promise<ArticleA
       excerpt: buildExcerpt(data.body),
       coverImageUrl: data.coverImageUrl ?? null,
       categoryId: data.categoryId,
+      publicationId,
       isPremium,
       priceCents,
       status: data.status,
@@ -165,6 +202,7 @@ export async function updateArticleAction(
 
   const hasCoAuthors = data.coAuthorIds.length > 0;
   const { isPremium, priceCents } = await resolvePremiumFields(data.isPremium, data.priceCents, hasCoAuthors);
+  const publicationId = await resolvePublicationId(data.publicationId, session.user.id);
 
   const slug =
     data.title === existing.title ? existing.slug : await generateUniqueSlug(data.title, articleId);
@@ -179,6 +217,7 @@ export async function updateArticleAction(
       excerpt: buildExcerpt(data.body),
       coverImageUrl: data.coverImageUrl ?? null,
       categoryId: data.categoryId,
+      publicationId,
       isPremium,
       priceCents,
       status: data.status,

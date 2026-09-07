@@ -52,6 +52,7 @@ export default async function EditArticlePage({ params }: { params: Promise<{ id
         status: article.status === "published" ? "published" : "draft",
         isPremium: article.isPremium,
         priceCents: article.priceCents,
+        publicationId: article.publicationId,
       }}
     />
   );

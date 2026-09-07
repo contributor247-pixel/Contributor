@@ -10,6 +10,7 @@ export const articleSchema = z.object({
   status: z.enum(["draft", "published"]),
   isPremium: z.boolean(),
   priceCents: z.number().int().positive().optional().nullable(),
+  publicationId: z.string().uuid().optional().nullable(),
 });
 
 export type ArticleInput = z.infer<typeof articleSchema>;

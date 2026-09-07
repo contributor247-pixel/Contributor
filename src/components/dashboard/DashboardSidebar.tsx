@@ -20,6 +20,7 @@ const AUTHOR_NAV: NavItem[] = [
   { href: "/dashboard/author", label: "Overview" },
   { href: "/dashboard/author/articles", label: "My Articles" },
   { href: "/dashboard/author/publications", label: "Publications" },
+  { href: "/dashboard/author/invites", label: "Invites" },
   { href: "/dashboard/author/billing", label: "Billing" },
   { href: "/dashboard/author/settings", label: "Settings" },
 ];
