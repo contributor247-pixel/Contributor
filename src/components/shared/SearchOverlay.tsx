@@ -120,18 +120,23 @@ export function SearchOverlay({ popularPills }: SearchOverlayProps) {
               />
             </form>
 
-            {popularPills.length > 0 && (
-              <div className="mt-8 flex flex-wrap justify-center gap-3">
-                {popularPills.map((pill) => (
-                  <button
-                    key={pill.slug}
-                    type="button"
-                    onClick={() => handlePillClick(pill.name)}
-                    className="rounded-[4px] border border-border-strong px-4 py-2 text-sm font-medium text-text-body transition-colors hover:border-ink hover:text-ink"
-                  >
-                    {pill.name}
-                  </button>
-                ))}
+            {popularPills.length > 0 && !query.trim() && (
+              <div className="mt-10 flex flex-col items-center gap-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-text-muted">
+                  Popular searches
+                </p>
+                <div className="flex flex-wrap justify-center gap-3">
+                  {popularPills.map((pill) => (
+                    <button
+                      key={pill.slug}
+                      type="button"
+                      onClick={() => handlePillClick(pill.name)}
+                      className="rounded-[4px] border border-border-strong px-4 py-2 text-sm font-medium text-text-body transition-colors hover:border-ink hover:text-ink"
+                    >
+                      {pill.name}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -142,6 +147,17 @@ export function SearchOverlay({ popularPills }: SearchOverlayProps) {
             )}
 
             <div className="mt-10">
+              {isLoading && (
+                <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3" aria-hidden="true">
+                  {[0, 1, 2].map((i) => (
+                    <div key={i} className="animate-pulse">
+                      <div className="aspect-[16/10] rounded-[4px] bg-bg-muted" />
+                      <div className="mt-3 h-4 w-2/3 rounded bg-bg-muted" />
+                      <div className="mt-2 h-3 w-1/2 rounded bg-bg-muted" />
+                    </div>
+                  ))}
+                </div>
+              )}
               {hasSearched && !isLoading && results.length === 0 && (
                 <EmptyState
                   icon={SearchX}
@@ -150,7 +166,7 @@ export function SearchOverlay({ popularPills }: SearchOverlayProps) {
                   cta={{ label: "Browse all content", href: "/content" }}
                 />
               )}
-              {results.length > 0 && (
+              {!isLoading && results.length > 0 && (
                 <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
                   {results.map((article) => (
                     <div key={article.slug} onClick={close}>
