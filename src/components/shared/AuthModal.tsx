@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { X } from "lucide-react";
+import { X, Mail, Lock, User } from "lucide-react";
 import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useAuthModal } from "@/hooks/use-auth-modal";
@@ -54,7 +54,7 @@ export function AuthModal() {
               </DialogPrimitive.Title>
               <DialogPrimitive.Close
                 aria-label="Close"
-                className="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full text-white transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-white md:text-[#111114] md:hover:bg-black/5"
+                className="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full text-white transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-white md:text-ink md:hover:bg-black/5"
               >
                 <X className="h-5 w-5" />
               </DialogPrimitive.Close>
@@ -79,13 +79,20 @@ export function AuthModal() {
 
 function DarkPanel({ mode, onSignUpClick }: { mode: "login" | "signup"; onSignUpClick: () => void }) {
   return (
-    <div className="relative flex min-h-[220px] shrink-0 items-center justify-center overflow-hidden bg-[#111114] px-8 py-10 text-center md:min-h-0 md:w-[45%] md:px-12">
+    <div className="relative flex min-h-[240px] shrink-0 items-center justify-center overflow-hidden bg-ink px-8 py-10 text-center md:min-h-0 md:w-[45%] md:px-12">
       <div
         aria-hidden
-        className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(200,16,46,0.25),transparent_60%),linear-gradient(160deg,#1c1c21_0%,#0b0b0d_100%)]"
+        className="absolute inset-0 bg-[radial-gradient(circle_at_30%_15%,rgba(139,30,63,0.35),transparent_55%),radial-gradient(circle_at_80%_85%,rgba(139,30,63,0.18),transparent_50%),linear-gradient(160deg,#1c1c21_0%,#0b0b0d_100%)]"
+      />
+      <div
+        aria-hidden
+        className="absolute inset-6 rounded-[2px] border border-white/[0.08] md:inset-8"
       />
       <div className="relative z-10 flex flex-col items-center gap-4">
-        <h2 className="font-serif text-3xl font-semibold text-white md:text-4xl">Create Account</h2>
+        <span className="font-serif text-xs uppercase tracking-[0.3em] text-primary-subtle/70">Contributor</span>
+        <h2 className="font-serif text-3xl font-semibold text-white md:text-4xl">
+          {mode === "login" ? "Create Account" : "Welcome to Contributor"}
+        </h2>
         {mode === "login" ? (
           <>
             <p className="max-w-xs text-sm text-white/80">
@@ -94,14 +101,14 @@ function DarkPanel({ mode, onSignUpClick }: { mode: "login" | "signup"; onSignUp
             <button
               type="button"
               onClick={onSignUpClick}
-              className="mt-2 rounded-[4px] bg-white px-8 py-3 text-sm font-semibold text-[#111114] transition-transform hover:scale-[1.02] focus-visible:outline-2 focus-visible:outline-white"
+              className="mt-2 rounded-[4px] bg-white px-8 py-3 text-sm font-semibold text-ink transition-transform hover:scale-[1.02] focus-visible:outline-2 focus-visible:outline-white"
             >
               Sign Up
             </button>
           </>
         ) : (
           <p className="max-w-xs text-sm text-white/80">
-            Already unlocking premium stories and publishing with fellow Authors — welcome back.
+            Join a community of writers and readers unlocking premium stories and publishing with fellow Authors.
           </p>
         )}
       </div>
@@ -111,7 +118,22 @@ function DarkPanel({ mode, onSignUpClick }: { mode: "login" | "signup"; onSignUp
 
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
-  return <p className="mt-1 text-sm text-[#D93025]">{message}</p>;
+  return <p className="mt-1 text-sm text-error">{message}</p>;
+}
+
+function IconInput({
+  icon: Icon,
+  ...props
+}: React.InputHTMLAttributes<HTMLInputElement> & { icon: React.ComponentType<{ className?: string }> }) {
+  return (
+    <div className="relative">
+      <Icon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+      <input
+        {...props}
+        className="h-12 w-full rounded-[4px] border border-border-strong pl-11 pr-4 text-text-heading placeholder:text-text-muted transition-colors focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-[#14141a14]"
+      />
+    </div>
+  );
 }
 
 function LoginForm({
@@ -190,38 +212,39 @@ function LoginForm({
 
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-sm">
-      <h1 className="mb-8 font-serif text-2xl font-semibold text-[#111114] md:text-3xl">
+      <h1 className="mb-1 font-serif text-2xl font-semibold text-text-heading md:text-3xl">
         Sign in to Contributor
       </h1>
+      <p className="mb-7 text-sm text-text-muted">Welcome back — enter your details to continue.</p>
 
       <div className="mb-4">
-        <input
+        <IconInput
+          icon={Mail}
           type="email"
           placeholder="Email Address"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="h-12 w-full rounded-[4px] border border-[#D3D0CA] px-4 text-[#111114] placeholder:text-[#7B7A7F] focus:border-[#111114] focus:outline-none focus:ring-[3px] focus:ring-[#11111414]"
         />
         <FieldError message={errors.email} />
       </div>
 
       <div className="mb-4">
-        <input
+        <IconInput
+          icon={Lock}
           type="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="h-12 w-full rounded-[4px] border border-[#D3D0CA] px-4 text-[#111114] placeholder:text-[#7B7A7F] focus:border-[#111114] focus:outline-none focus:ring-[3px] focus:ring-[#11111414]"
         />
         <FieldError message={errors.password} />
       </div>
 
-      <label className="mb-6 flex items-center gap-2 text-sm text-[#3A3A3E]">
+      <label className="mb-6 flex items-center gap-2 text-sm text-text-body">
         <input
           type="checkbox"
           checked={rememberMe}
           onChange={(e) => setRememberMe(e.target.checked)}
-          className="h-4 w-4 rounded border-[#D3D0CA]"
+          className="h-4 w-4 rounded border-border-strong accent-ink"
         />
         Remember Me
       </label>
@@ -229,7 +252,7 @@ function LoginForm({
       <FieldError message={formError ?? undefined} />
       {showResendLink &&
         (resendState === "sent" ? (
-          <p className="mt-1 text-sm text-[#1E8E5A]">Verification email sent — check your inbox.</p>
+          <p className="mt-1 text-sm text-success">Verification email sent — check your inbox.</p>
         ) : (
           <button
             type="button"
@@ -239,7 +262,7 @@ function LoginForm({
               await resendVerificationAction(email);
               setResendState("sent");
             }}
-            className="mt-1 text-sm text-[#111114] underline-offset-2 hover:underline disabled:text-[#B0AFAA]"
+            className="mt-1 text-sm text-ink underline-offset-2 hover:underline disabled:text-text-muted"
           >
             {resendState === "sending" ? "Sending..." : "Resend verification email"}
           </button>
@@ -248,21 +271,18 @@ function LoginForm({
       <button
         type="submit"
         disabled={isSubmitting}
-        className="mt-4 h-12 w-full rounded-[4px] bg-[#111114] text-sm font-semibold text-white transition-colors hover:bg-[#C8102E] disabled:cursor-not-allowed disabled:bg-[#C9C9C9] disabled:text-[#8A8A8A]"
+        className="mt-4 h-12 w-full rounded-[4px] bg-ink text-sm font-semibold text-white transition-colors hover:bg-primary disabled:cursor-not-allowed disabled:bg-border-strong disabled:text-text-muted"
       >
         {isSubmitting ? "Signing in..." : "Sign in"}
       </button>
 
-      <div className="mt-4 flex items-center justify-between text-sm">
-        <button type="button" className="text-[#111114] underline-offset-2 hover:underline">
-          Lost Your Password?
-        </button>
+      <div className="mt-5 flex items-center justify-center text-sm">
         <button
           type="button"
           onClick={onSwitchToSignup}
-          className="text-[#111114] underline-offset-2 hover:underline"
+          className="text-text-muted transition-colors hover:text-ink"
         >
-          Create Account
+          Don&apos;t have an account? <span className="font-semibold text-ink underline-offset-2 hover:underline">Create one</span>
         </button>
       </div>
     </form>
@@ -321,16 +341,17 @@ function SignupForm({
 
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-sm">
-      <h1 className="mb-6 font-serif text-2xl font-semibold text-[#111114] md:text-3xl">
+      <h1 className="mb-1 font-serif text-2xl font-semibold text-text-heading md:text-3xl">
         Create your account
       </h1>
+      <p className="mb-6 text-sm text-text-muted">Takes less than a minute — no credit card required.</p>
 
       {successMessage ? (
         <p
           className={
             successIsWarning
-              ? "rounded-[4px] border border-[#B8860B] bg-[#B8860B0f] px-4 py-3 text-sm text-[#B8860B]"
-              : "rounded-[4px] border border-[#1E8E5A] bg-[#1E8E5A0f] px-4 py-3 text-sm text-[#1E8E5A]"
+              ? "rounded-[4px] border border-warning bg-warning/10 px-4 py-3 text-sm text-warning"
+              : "rounded-[4px] border border-success bg-success/10 px-4 py-3 text-sm text-success"
           }
         >
           {successMessage}
@@ -338,67 +359,81 @@ function SignupForm({
       ) : (
         <>
           <div className="mb-4">
-            <input
+            <IconInput
+              icon={User}
               type="text"
               placeholder="Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="h-12 w-full rounded-[4px] border border-[#D3D0CA] px-4 text-[#111114] placeholder:text-[#7B7A7F] focus:border-[#111114] focus:outline-none focus:ring-[3px] focus:ring-[#11111414]"
             />
             <FieldError message={errors.name} />
           </div>
 
           <div className="mb-4">
-            <input
+            <IconInput
+              icon={Mail}
               type="email"
               placeholder="Email Address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="h-12 w-full rounded-[4px] border border-[#D3D0CA] px-4 text-[#111114] placeholder:text-[#7B7A7F] focus:border-[#111114] focus:outline-none focus:ring-[3px] focus:ring-[#11111414]"
             />
             <FieldError message={errors.email} />
           </div>
 
           <div className="mb-4">
-            <input
+            <IconInput
+              icon={Lock}
               type="password"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="h-12 w-full rounded-[4px] border border-[#D3D0CA] px-4 text-[#111114] placeholder:text-[#7B7A7F] focus:border-[#111114] focus:outline-none focus:ring-[3px] focus:ring-[#11111414]"
             />
             <FieldError message={errors.password} />
           </div>
 
           <div className="mb-4">
-            <input
+            <IconInput
+              icon={Lock}
               type="password"
               placeholder="Confirm Password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="h-12 w-full rounded-[4px] border border-[#D3D0CA] px-4 text-[#111114] placeholder:text-[#7B7A7F] focus:border-[#111114] focus:outline-none focus:ring-[3px] focus:ring-[#11111414]"
             />
             <FieldError message={errors.confirmPassword} />
           </div>
 
           <fieldset className="mb-6">
-            <legend className="mb-2 text-sm font-medium text-[#3A3A3E]">I am a...</legend>
-            <div className="flex gap-4 text-sm">
-              <label className="flex items-center gap-2">
+            <legend className="mb-2 text-sm font-medium text-text-body">I am a...</legend>
+            <div className="flex gap-2 text-sm">
+              <label
+                className={
+                  role === "reader"
+                    ? "flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-[4px] border border-ink bg-ink/5 px-4 py-2.5 font-medium text-ink transition-colors"
+                    : "flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-[4px] border border-border-strong px-4 py-2.5 text-text-body transition-colors hover:border-text-muted"
+                }
+              >
                 <input
                   type="radio"
                   name="role"
                   checked={role === "reader"}
                   onChange={() => setRole("reader")}
+                  className="sr-only"
                 />
                 Reader
               </label>
-              <label className="flex items-center gap-2">
+              <label
+                className={
+                  role === "author"
+                    ? "flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-[4px] border border-ink bg-ink/5 px-4 py-2.5 font-medium text-ink transition-colors"
+                    : "flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-[4px] border border-border-strong px-4 py-2.5 text-text-body transition-colors hover:border-text-muted"
+                }
+              >
                 <input
                   type="radio"
                   name="role"
                   checked={role === "author"}
                   onChange={() => setRole("author")}
+                  className="sr-only"
                 />
                 Author
               </label>
@@ -410,7 +445,7 @@ function SignupForm({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="h-12 w-full rounded-[4px] bg-[#111114] text-sm font-semibold text-white transition-colors hover:bg-[#C8102E] disabled:cursor-not-allowed disabled:bg-[#C9C9C9] disabled:text-[#8A8A8A]"
+            className="h-12 w-full rounded-[4px] bg-ink text-sm font-semibold text-white transition-colors hover:bg-primary disabled:cursor-not-allowed disabled:bg-border-strong disabled:text-text-muted"
           >
             {isSubmitting ? "Creating account..." : "Create Account"}
           </button>
@@ -419,7 +454,7 @@ function SignupForm({
             <button
               type="button"
               onClick={onSwitchToLogin}
-              className="text-[#111114] underline-offset-2 hover:underline"
+              className="text-text-muted transition-colors hover:text-ink"
             >
               Already have an account? Sign in
             </button>

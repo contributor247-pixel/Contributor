@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Menu, X, Search, ShoppingBag, User } from "lucide-react";
+import { Menu, X, Search, ShoppingBag, User, LogOut } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 import { useSearchOverlay } from "@/hooks/use-search-overlay";
@@ -163,18 +163,63 @@ export function Navbar() {
                   <X className="h-5 w-5" aria-hidden="true" />
                 </button>
               </div>
-              <nav className="flex flex-col gap-1" aria-label="Primary mobile">
-                {NAV_LINKS.map((link) => (
+              <nav className="flex flex-1 flex-col" aria-label="Primary mobile">
+                {NAV_LINKS.map((link, i) => (
                   <Link
                     key={link.href}
                     href={link.href}
                     onClick={() => setIsDrawerOpen(false)}
-                    className="rounded-[4px] px-2 py-3 text-base text-white/90 transition-colors hover:bg-white/10"
+                    className="group flex items-center gap-4 border-b border-white/10 py-4 text-base text-white/90 transition-colors first:border-t hover:text-white"
                   >
+                    <span className="font-serif text-xs text-white/40 transition-colors group-hover:text-primary-subtle">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
                     {link.label}
                   </Link>
                 ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsDrawerOpen(false);
+                    openSearch();
+                  }}
+                  className="group flex items-center gap-4 border-b border-white/10 py-4 text-base text-white/90 transition-colors hover:text-white"
+                >
+                  <Search className="h-4 w-4 text-white/40 transition-colors group-hover:text-primary-subtle" aria-hidden="true" />
+                  Search
+                </button>
               </nav>
+
+              <div className="mt-auto pt-6">
+                {status === "authenticated" ? (
+                  <>
+                    <p className="mb-3 truncate text-xs text-white/50">{session?.user?.email}</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsDrawerOpen(false);
+                        signOut();
+                      }}
+                      className="flex h-11 w-full items-center justify-center gap-2 rounded-[4px] border border-white/15 text-sm font-medium text-white transition-colors hover:bg-white/10"
+                    >
+                      <LogOut className="h-4 w-4" aria-hidden="true" />
+                      Sign out
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsDrawerOpen(false);
+                      open("login");
+                    }}
+                    className="flex h-11 w-full items-center justify-center gap-2 rounded-[4px] bg-white text-sm font-semibold text-ink transition-transform hover:scale-[1.02]"
+                  >
+                    <User className="h-4 w-4" aria-hidden="true" />
+                    Sign in
+                  </button>
+                )}
+              </div>
             </motion.div>
           </>
         )}
