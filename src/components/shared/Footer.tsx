@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { SocialIcon } from "@/components/shared/SocialIcon";
+import type { ArticleCardData } from "@/components/shared/ArticleCard";
 
 // Newsletter capture is out of scope for Phase 1 — this stub just
 // simulates a submission so the UI is fully functional and testable
@@ -12,7 +13,13 @@ function subscribeToNewsletter(_email: string): Promise<{ success: boolean }> {
   return new Promise((resolve) => setTimeout(() => resolve({ success: true }), 600));
 }
 
-export function Footer() {
+interface FooterProps {
+  latest: ArticleCardData[];
+  featured: ArticleCardData | null;
+  suggestions: ArticleCardData[];
+}
+
+export function Footer({ latest, featured, suggestions }: FooterProps) {
   const [email, setEmail] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [status, setStatus] = useState<"idle" | "sending" | "sent">("idle");
@@ -105,9 +112,9 @@ export function Footer() {
             </Link>
           </div>
 
-          <FooterList title="Latest Contents" />
-          <FooterFeatured />
-          <FooterList title="Suggestions Contents" />
+          <FooterList title="Latest Contents" articles={latest} />
+          <FooterFeatured article={featured} />
+          <FooterList title="Suggestions Contents" articles={suggestions} />
         </div>
 
         <div className="flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 sm:flex-row">
@@ -146,24 +153,57 @@ export function Footer() {
   );
 }
 
-function FooterList({ title }: { title: string }) {
-  // No article data source exists yet (Step 4/5 build article CRUD and
-  // querying) — an honest empty state rather than fabricated placeholder
-  // articles, consistent with docs/02_ThemeGuideline.md Section 8.4's
-  // "no invented content" principle applied to a not-yet-populated list.
+function FooterList({ title, articles }: { title: string; articles: ArticleCardData[] }) {
   return (
     <div>
       <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-white/90">{title}</h3>
-      <p className="text-sm text-white/50">No articles published yet.</p>
+      {articles.length === 0 ? (
+        <p className="text-sm text-white/50">No articles published yet.</p>
+      ) : (
+        <ul className="flex flex-col gap-3">
+          {articles.map((article) => (
+            <li key={article.slug}>
+              <Link
+                href={`/article/${article.slug}`}
+                className="text-sm text-white/70 transition-colors hover:text-white"
+              >
+                <span className="line-clamp-2">{article.title}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
 
-function FooterFeatured() {
+function FooterFeatured({ article }: { article: ArticleCardData | null }) {
   return (
     <div>
       <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-white/90">Featured</h3>
-      <p className="text-sm text-white/50">Nothing featured yet.</p>
+      {!article ? (
+        <p className="text-sm text-white/50">Nothing featured yet.</p>
+      ) : (
+        <Link href={`/article/${article.slug}`} className="group block">
+          <div className="aspect-[3/4] w-full overflow-hidden rounded-[4px] bg-white/10">
+            {article.coverImageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element -- base64 cover
+              <img
+                src={article.coverImageUrl}
+                alt={article.title}
+                className="h-full w-full object-cover transition-transform duration-200 ease-out group-hover:scale-[1.03]"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center px-3 text-center text-xs text-white/40">
+                {article.category.name}
+              </div>
+            )}
+          </div>
+          <p className="mt-3 line-clamp-2 text-sm font-medium text-white/90 transition-colors group-hover:text-white">
+            {article.title}
+          </p>
+        </Link>
+      )}
     </div>
   );
 }

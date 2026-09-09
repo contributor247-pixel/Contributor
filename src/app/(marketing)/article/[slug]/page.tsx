@@ -71,6 +71,8 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
   const bodyHtml = (article.body as { html?: string } | null)?.html ?? "";
   const primaryAuthor = article.authors[0];
   const byline = article.authors.map((a) => a.name ?? "Unknown").join(" & ");
+  const wordCount = bodyHtml.replace(/<[^>]*>/g, " ").trim().split(/\s+/).filter(Boolean).length;
+  const readMinutes = Math.max(1, Math.round(wordCount / 200));
 
   const showPaywall = article.isPremium && !hasAccess;
   const activePublicationSubName = showPaywall && session?.user
@@ -82,14 +84,16 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
       <p className="text-xs font-semibold uppercase tracking-wide text-primary">
         <CategoryPill name={article.categoryName} slug={article.categorySlug} />
       </p>
-      <h1 className="mt-3 font-serif text-3xl font-semibold leading-tight text-text-heading sm:text-4xl">
+      <h1 className="mt-3 font-serif text-3xl font-semibold leading-[1.15] text-text-heading sm:text-[2.75rem]">
         {article.title}
       </h1>
-      <div className="mt-4 flex items-center gap-3">
-        <Avatar name={primaryAuthor?.name ?? null} avatarUrl={primaryAuthor?.avatarUrl ?? null} size={40} />
+      <div className="mt-6 flex items-center gap-3 border-y border-border py-4">
+        <Avatar name={primaryAuthor?.name ?? null} avatarUrl={primaryAuthor?.avatarUrl ?? null} size={44} />
         <div>
-          <p className="text-sm font-medium text-text-heading">{byline}</p>
-          <p className="text-xs text-text-muted">{timeAgo(article.publishedAt)}</p>
+          <p className="text-sm font-semibold text-text-heading">{byline}</p>
+          <p className="text-xs text-text-muted">
+            {timeAgo(article.publishedAt)} · {readMinutes} min read
+          </p>
         </div>
       </div>
 
@@ -106,7 +110,7 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
         <div className="relative mt-8">
           <div className="relative max-h-[420px] overflow-hidden">
             <div
-              className="prose prose-neutral max-w-none whitespace-pre-wrap text-text-body"
+              className="prose prose-neutral max-w-none whitespace-pre-wrap text-[1.0625rem] leading-[1.8] text-text-body"
               dangerouslySetInnerHTML={{ __html: bodyHtml }}
             />
             <div
@@ -124,12 +128,12 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
         </div>
       ) : (
         <div
-          className="prose prose-neutral mt-8 max-w-none whitespace-pre-wrap text-text-body"
+          className="prose prose-neutral mt-8 max-w-none whitespace-pre-wrap text-[1.0625rem] leading-[1.8] text-text-body"
           dangerouslySetInnerHTML={{ __html: bodyHtml }}
         />
       )}
 
-      <div className="mt-8 border-t border-border pt-4">
+      <div className="mt-8 flex items-center justify-between border-t border-border pt-5">
         <ReportDialog articleId={article.id} />
       </div>
 
