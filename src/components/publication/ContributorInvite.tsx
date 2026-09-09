@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { Search, UserPlus } from "lucide-react";
 import { sendInviteAction, type ContributorCandidate } from "@/lib/actions/publication";
 
 interface ContributorInviteProps {
@@ -49,25 +50,33 @@ export function ContributorInvite({ publicationId }: ContributorInviteProps) {
   return (
     <div>
       <label className="mb-1 block text-sm font-medium text-text-body">Invite a contributor</label>
-      <div className="relative">
+      <div className="relative max-w-sm">
+        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
         <input
           type="text"
           value={query}
           onChange={(e) => handleChange(e.target.value)}
           placeholder="Search by name or email..."
-          className="h-11 w-full max-w-sm rounded-[4px] border border-border-strong px-3 text-sm text-text-body placeholder:text-text-muted focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-[#11111414]"
+          className="h-11 w-full rounded-[4px] border border-border-strong pl-10 pr-3 text-sm text-text-body placeholder:text-text-muted transition-colors focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-[#14141a14]"
         />
         {results.length > 0 && (
-          <ul className="absolute z-10 mt-1 w-full max-w-sm rounded-[4px] border border-border bg-surface shadow-lg">
+          <ul className="absolute z-10 mt-1.5 w-full overflow-hidden rounded-[4px] border border-border bg-surface shadow-lg">
             {results.map((candidate) => (
               <li key={candidate.id}>
                 <button
                   type="button"
                   onClick={() => handleInvite(candidate)}
                   disabled={isSending}
-                  className="block w-full px-3 py-2 text-left text-sm hover:bg-bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm transition-colors hover:bg-bg-muted disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {candidate.name ?? "Unnamed"} <span className="text-text-muted">({candidate.email})</span>
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ink text-[11px] font-semibold text-white">
+                    {(candidate.name ?? candidate.email).charAt(0).toUpperCase()}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-text-heading">{candidate.name ?? "Unnamed"}</span>
+                    <span className="block truncate text-xs text-text-muted">{candidate.email}</span>
+                  </span>
+                  <UserPlus className="h-4 w-4 shrink-0 text-text-muted" aria-hidden="true" />
                 </button>
               </li>
             ))}
