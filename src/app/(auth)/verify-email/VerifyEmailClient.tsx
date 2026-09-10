@@ -28,32 +28,32 @@ export function VerifyEmailClient({ status, email }: VerifyEmailClientProps) {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#F7F6F4] px-6 text-center">
-      <div className="max-w-md rounded-[4px] border border-[#E7E5E1] bg-white p-10 shadow-sm">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-bg px-6 text-center">
+      <div className="max-w-md rounded-[4px] border border-border bg-surface p-10 shadow-sm">
         {status === "success" ? (
           <>
-            <CheckCircle className="mx-auto mb-4 h-12 w-12 text-[#1E8E5A]" />
-            <h1 className="mb-2 font-serif text-2xl font-semibold text-[#111114]">
+            <CheckCircle className="animate__animated animate__bounceIn motion-reduce:animate-none mx-auto mb-4 h-12 w-12 text-success" />
+            <h1 className="mb-2 font-serif text-2xl font-semibold text-text-heading">
               Email verified
             </h1>
-            <p className="mb-6 text-sm text-[#7B7A7F]">
+            <p className="mb-6 text-sm text-text-muted">
               Your account is confirmed. You can now sign in to Contributor.
             </p>
             <button
               type="button"
               onClick={() => open("login")}
-              className="h-12 w-full rounded-[4px] bg-[#111114] text-sm font-semibold text-white transition-colors hover:bg-[#C8102E]"
+              className="h-12 w-full rounded-[4px] bg-ink text-sm font-semibold text-white transition-colors hover:bg-primary"
             >
               Continue to sign in
             </button>
           </>
         ) : (
           <>
-            <XCircle className="mx-auto mb-4 h-12 w-12 text-[#D93025]" />
-            <h1 className="mb-2 font-serif text-2xl font-semibold text-[#111114]">
+            <XCircle className="mx-auto mb-4 h-12 w-12 text-error" />
+            <h1 className="mb-2 font-serif text-2xl font-semibold text-text-heading">
               {status === "expired" ? "This link has expired" : "This link is invalid"}
             </h1>
-            <p className="mb-6 text-sm text-[#7B7A7F]">
+            <p className="mb-6 text-sm text-text-muted">
               {status === "expired"
                 ? "Verification links expire after 24 hours. Request a new one below."
                 : "This verification link is invalid or has already been used."}
@@ -61,7 +61,7 @@ export function VerifyEmailClient({ status, email }: VerifyEmailClientProps) {
             {email && (
               <>
                 {resendState === "sent" ? (
-                  <p className="rounded-[4px] border border-[#1E8E5A] bg-[#1E8E5A0f] px-4 py-3 text-sm text-[#1E8E5A]">
+                  <p className="rounded-[4px] border border-success bg-success/5 px-4 py-3 text-sm text-success">
                     A new verification email is on its way to {email}.
                   </p>
                 ) : (
@@ -70,12 +70,12 @@ export function VerifyEmailClient({ status, email }: VerifyEmailClientProps) {
                       type="button"
                       onClick={handleResend}
                       disabled={resendState === "sending"}
-                      className="h-12 w-full rounded-[4px] border border-[#111114] text-sm font-semibold text-[#111114] transition-colors hover:bg-[#111114] hover:text-white disabled:cursor-not-allowed disabled:border-[#D3D0CA] disabled:text-[#B0AFAA]"
+                      className="h-12 w-full rounded-[4px] border border-ink text-sm font-semibold text-ink transition-colors hover:bg-ink hover:text-white disabled:cursor-not-allowed disabled:border-border-strong disabled:text-text-muted"
                     >
                       {resendState === "sending" ? "Sending..." : "Resend verification email"}
                     </button>
                     {resendState === "error" && (
-                      <p className="mt-3 text-sm text-[#D93025]">{resendError}</p>
+                      <p className="mt-3 text-sm text-error">{resendError}</p>
                     )}
                   </>
                 )}

@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "../styles/tokens.css";
+@import "animate.css/animate.min.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -159,6 +160,25 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+/* Universal tap/click scale-down on every native button, per
+   docs/02_ThemeGuideline.md Section 6. The spec frames this as a
+   Framer Motion whileTap, but there is no shared Button primitive
+   in this codebase to centralize that in (confirmed absent — every
+   button across the app hand-styles its own classes), and converting
+   every <button> to motion.button individually would be a large,
+   risky rewrite for a motion-only polish pass. This CSS :active rule
+   produces the same visual result (a 0.97 scale-down on press) for
+   every button in the app in one place, and is skipped outright
+   under prefers-reduced-motion. The large hero/paywall CTAs still get
+   true Framer Motion treatment via MagneticButton, since the magnetic
+   hover effect itself requires JS pointer tracking anyway. */
+@media (prefers-reduced-motion: no-preference) {
+  button:not(:disabled):active {
+    transform: scale(0.97);
+    transition: transform 120ms cubic-bezier(0.4, 0, 1, 1);
   }
 }
 

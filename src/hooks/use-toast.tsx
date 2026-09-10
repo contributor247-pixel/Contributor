@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useState } from "react";
+import { CheckCircle2 } from "lucide-react";
 
 interface ToastMessage {
   id: number;
@@ -34,8 +35,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           <div
             key={t.id}
             role="status"
-            className="pointer-events-auto rounded-[4px] bg-ink px-4 py-3 text-sm font-medium text-white shadow-lg"
+            className="pointer-events-auto flex items-center gap-2 rounded-[4px] bg-ink px-4 py-3 text-sm font-medium text-white shadow-lg"
           >
+            <CheckCircle2
+              className="animate__animated animate__pulse motion-reduce:animate-none h-4 w-4 shrink-0 text-success"
+              aria-hidden="true"
+            />
             {t.text}
           </div>
         ))}

@@ -6,6 +6,7 @@ import { ArticleCard } from "@/components/shared/ArticleCard";
 import { EditorsPicks } from "@/components/shared/EditorsPicks";
 import { SectionContainer } from "@/components/shared/SectionContainer";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ScrollRevealGrid } from "@/components/shared/ScrollRevealGrid";
 
 export default async function Home() {
   const recent = await getRecentArticles(24);
@@ -36,11 +37,11 @@ export default async function Home() {
 
       {gridA.length > 0 && (
         <SectionContainer>
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <ScrollRevealGrid className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {gridA.map((article) => (
               <ArticleCard key={article.slug} article={article} />
             ))}
-          </div>
+          </ScrollRevealGrid>
         </SectionContainer>
       )}
 
@@ -67,21 +68,21 @@ export default async function Home() {
 
       {gridB.length > 0 && (
         <SectionContainer heading="More Stories">
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <ScrollRevealGrid className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {gridB.map((article) => (
               <ArticleCard key={article.slug} article={article} />
             ))}
-          </div>
+          </ScrollRevealGrid>
         </SectionContainer>
       )}
 
       {gridC.length > 0 && (
         <SectionContainer heading="Latest">
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <ScrollRevealGrid className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {gridC.map((article) => (
               <ArticleCard key={article.slug} article={article} />
             ))}
-          </div>
+          </ScrollRevealGrid>
         </SectionContainer>
       )}
     </>

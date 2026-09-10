@@ -7,6 +7,7 @@ import { X, Mail, Lock, User } from "lucide-react";
 import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useAuthModal } from "@/hooks/use-auth-modal";
+import { useShake } from "@/hooks/use-shake";
 import { signupAction } from "@/lib/actions/auth";
 import { resendVerificationAction } from "@/lib/actions/verify-email";
 import { loginSchema, signupSchema } from "@/lib/validators/auth";
@@ -152,6 +153,7 @@ function LoginForm({
   const [showResendLink, setShowResendLink] = useState(false);
   const [resendState, setResendState] = useState<"idle" | "sending" | "sent">("idle");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [shakeKey, setShakeKey] = useState(0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -165,6 +167,7 @@ function LoginForm({
         if (key && !fieldErrors[key]) fieldErrors[key] = issue.message;
       }
       setErrors(fieldErrors);
+      setShakeKey((k) => k + 1);
       return;
     }
     setErrors({});
@@ -193,6 +196,7 @@ function LoginForm({
         default:
           setFormError("Something went wrong. Please try again.");
       }
+      setShakeKey((k) => k + 1);
       return;
     }
 
@@ -210,8 +214,10 @@ function LoginForm({
     onSuccess();
   };
 
+  const shakeRef = useShake(shakeKey);
+
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-sm">
+    <form ref={shakeRef} onSubmit={handleSubmit} className="w-full max-w-sm">
       <h1 className="mb-1 font-serif text-2xl font-semibold text-text-heading md:text-3xl">
         Sign in to Contributor
       </h1>
@@ -306,6 +312,8 @@ function SignupForm({
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [successIsWarning, setSuccessIsWarning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [shakeKey, setShakeKey] = useState(0);
+  const shakeRef = useShake(shakeKey);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -318,6 +326,7 @@ function SignupForm({
         if (key && !fieldErrors[key]) fieldErrors[key] = issue.message;
       }
       setErrors(fieldErrors);
+      setShakeKey((k) => k + 1);
       return;
     }
     setErrors({});
@@ -326,6 +335,7 @@ function SignupForm({
     setIsSubmitting(false);
     if (!result.success) {
       setFormError(result.error);
+      setShakeKey((k) => k + 1);
       return;
     }
     if (result.emailSendFailed) {
@@ -340,7 +350,7 @@ function SignupForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-sm">
+    <form ref={shakeRef} onSubmit={handleSubmit} className="w-full max-w-sm">
       <h1 className="mb-1 font-serif text-2xl font-semibold text-text-heading md:text-3xl">
         Create your account
       </h1>

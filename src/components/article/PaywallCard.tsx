@@ -5,6 +5,7 @@ import { Lock } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 import { SubscribeButton } from "@/components/billing/SubscribeButton";
+import { MagneticButton } from "@/components/shared/MagneticButton";
 
 interface PaywallCardProps {
   articleId: string;
@@ -63,14 +64,14 @@ export function PaywallCard({
       {error && <p className="mt-3 text-sm text-error">{error}</p>}
 
       <div className="mt-6 flex w-full max-w-xs flex-col gap-3">
-        <button
+        <MagneticButton
           type="button"
           onClick={handleBuy}
           disabled={isSubmitting}
           className="h-11 rounded-[4px] bg-ink text-sm font-semibold text-white transition-colors hover:bg-primary disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting ? "Redirecting to checkout..." : `Buy this article — $${(priceCents / 100).toFixed(2)}`}
-        </button>
+        </MagneticButton>
         {publicationId && (
           <SubscribeButton
             type="publication"

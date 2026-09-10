@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useSearchOverlay } from "@/hooks/use-search-overlay";
 import { ArticleCard, type ArticleCardData } from "@/components/shared/ArticleCard";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { SkeletonCard } from "@/components/shared/SkeletonCard";
 
 interface SearchOverlayProps {
   popularPills: { name: string; slug: string }[];
@@ -147,34 +148,50 @@ export function SearchOverlay({ popularPills }: SearchOverlayProps) {
             )}
 
             <div className="mt-10">
-              {isLoading && (
-                <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3" aria-hidden="true">
-                  {[0, 1, 2].map((i) => (
-                    <div key={i} className="animate-pulse">
-                      <div className="aspect-[16/10] rounded-[4px] bg-bg-muted" />
-                      <div className="mt-3 h-4 w-2/3 rounded bg-bg-muted" />
-                      <div className="mt-2 h-3 w-1/2 rounded bg-bg-muted" />
-                    </div>
-                  ))}
-                </div>
-              )}
-              {hasSearched && !isLoading && results.length === 0 && (
-                <EmptyState
-                  icon={SearchX}
-                  headline={`No results for "${query}"`}
-                  description="Try a different keyword or browse all content instead."
-                  cta={{ label: "Browse all content", href: "/content" }}
-                />
-              )}
-              {!isLoading && results.length > 0 && (
-                <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-                  {results.map((article) => (
-                    <div key={article.slug} onClick={close}>
-                      <ArticleCard article={article} />
-                    </div>
-                  ))}
-                </div>
-              )}
+              <AnimatePresence mode="wait">
+                {isLoading ? (
+                  <motion.div
+                    key="skeleton"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: prefersReducedMotion ? 0.01 : 0.15 }}
+                    className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3"
+                  >
+                    {[0, 1, 2].map((i) => (
+                      <SkeletonCard key={i} />
+                    ))}
+                  </motion.div>
+                ) : hasSearched && results.length === 0 ? (
+                  <motion.div
+                    key="empty"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: prefersReducedMotion ? 0.01 : 0.2 }}
+                  >
+                    <EmptyState
+                      icon={SearchX}
+                      headline={`No results for "${query}"`}
+                      description="Try a different keyword or browse all content instead."
+                      cta={{ label: "Browse all content", href: "/content" }}
+                    />
+                  </motion.div>
+                ) : results.length > 0 ? (
+                  <motion.div
+                    key="results"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: prefersReducedMotion ? 0.01 : 0.2 }}
+                    className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3"
+                  >
+                    {results.map((article) => (
+                      <div key={article.slug} onClick={close}>
+                        <ArticleCard article={article} />
+                      </div>
+                    ))}
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
             </div>
           </motion.div>
         </motion.div>

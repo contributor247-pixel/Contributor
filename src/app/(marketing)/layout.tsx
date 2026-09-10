@@ -1,5 +1,6 @@
 import { Navbar } from "@/components/shared/Navbar";
 import { Footer } from "@/components/shared/Footer";
+import { PageTransition } from "@/components/shared/PageTransition";
 import { getRecentArticles } from "@/lib/queries/articles";
 
 export default async function MarketingLayout({ children }: { children: React.ReactNode }) {
@@ -11,7 +12,9 @@ export default async function MarketingLayout({ children }: { children: React.Re
   return (
     <>
       <Navbar />
-      <main className="flex flex-1 flex-col">{children}</main>
+      <main className="flex flex-1 flex-col">
+        <PageTransition>{children}</PageTransition>
+      </main>
       <Footer latest={latest} featured={featured} suggestions={suggestions} />
     </>
   );

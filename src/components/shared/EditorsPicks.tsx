@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ArticleCardData } from "@/components/shared/ArticleCard";
 import { CategoryPill } from "@/components/shared/CategoryPill";
+import { ScrollRevealGrid } from "@/components/shared/ScrollRevealGrid";
 import { timeAgo } from "@/lib/time-ago";
 
 interface EditorsPicksProps {
@@ -29,7 +30,7 @@ export function EditorsPicks({ featured, picks }: EditorsPicksProps) {
         </Link>
         <p className="mt-2 line-clamp-2 text-text-muted">{featured.excerpt}</p>
       </div>
-      <ol className="flex flex-col divide-y divide-border lg:col-span-5">
+      <ScrollRevealGrid as="ol" className="flex flex-col divide-y divide-border lg:col-span-5">
         {picks.map((pick, i) => (
           <li key={pick.slug} className="flex gap-4 py-4 first:pt-0 last:pb-0">
             <span className="font-serif text-2xl font-semibold text-border-strong">
@@ -49,7 +50,7 @@ export function EditorsPicks({ featured, picks }: EditorsPicksProps) {
             </div>
           </li>
         ))}
-      </ol>
+      </ScrollRevealGrid>
     </div>
   );
 }

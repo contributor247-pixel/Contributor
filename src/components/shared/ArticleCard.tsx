@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { motion, useReducedMotion } from "framer-motion";
 import { Avatar } from "@/components/shared/Avatar";
 import { CategoryPill } from "@/components/shared/CategoryPill";
 import { PremiumBadge } from "@/components/shared/PremiumBadge";
@@ -23,9 +26,24 @@ interface ArticleCardProps {
   showExcerpt?: boolean;
 }
 
+// Card hover: lift -4px + shadow grow + image scale(1.03), 220ms
+// ease-out, per docs/02_ThemeGuideline.md Section 6 — Framer Motion
+// owns card-level hover per that section's library-ownership rule
+// (not a plain CSS transition). whileHover on the wrapping
+// motion.article drives the lift/shadow; the image's own scale
+// still rides on the existing group-hover CSS class since it's a
+// nested element Framer Motion's single whileHover variant can't
+// reach without a second motion component — group-hover keeps that
+// in sync with the same hover state for free.
 export function ArticleCard({ article, showExcerpt = true }: ArticleCardProps) {
+  const prefersReducedMotion = useReducedMotion();
+
   return (
-    <article className="group flex flex-col transition-transform duration-200 ease-out hover:-translate-y-1">
+    <motion.article
+      className="group flex flex-col rounded-[4px]"
+      whileHover={prefersReducedMotion ? undefined : { y: -4, boxShadow: "0 12px 24px -8px rgba(20, 20, 26, 0.18)" }}
+      transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+    >
       <Link href={`/article/${article.slug}`} className="relative block aspect-[16/10] overflow-hidden rounded-[4px] bg-bg-muted">
         {article.isPremium && <PremiumBadge />}
         {article.coverImageUrl ? (
@@ -33,7 +51,7 @@ export function ArticleCard({ article, showExcerpt = true }: ArticleCardProps) {
           <img
             src={article.coverImageUrl}
             alt={article.title}
-            className="h-full w-full object-cover transition-transform duration-200 ease-out group-hover:scale-[1.03]"
+            className="h-full w-full object-cover transition-transform duration-[220ms] ease-out group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-text-muted">No image</div>
@@ -60,6 +78,6 @@ export function ArticleCard({ article, showExcerpt = true }: ArticleCardProps) {
           </span>
         </div>
       </div>
-    </article>
+    </motion.article>
   );
 }

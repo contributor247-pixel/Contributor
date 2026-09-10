@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Check } from "lucide-react";
+import { MagneticButton } from "@/components/shared/MagneticButton";
 
 interface GoProSectionProps {
   monthlyCents: number;
@@ -104,14 +105,14 @@ export function GoProSection({ monthlyCents, yearlyCents }: GoProSectionProps) {
 
         {error && <p className="mt-4 text-sm text-error">{error}</p>}
 
-        <button
+        <MagneticButton
           type="button"
           onClick={handleUpgrade}
           disabled={isSubmitting}
           className="mt-6 flex h-12 w-full items-center justify-center rounded-[4px] bg-ink text-sm font-semibold text-white transition-colors hover:bg-primary disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting ? "Redirecting to checkout..." : "Go Pro"}
-        </button>
+        </MagneticButton>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ArticleCardData } from "@/components/shared/ArticleCard";
+import { HeroParallaxImage } from "@/components/shared/HeroParallaxImage";
 import { timeAgo } from "@/lib/time-ago";
 
 interface HomeHeroProps {
@@ -12,8 +13,7 @@ export function HomeHero({ featured, rail }: HomeHeroProps) {
     <section className="bg-ink text-white">
       <Link href={`/article/${featured.slug}`} className="relative block h-[520px] w-full overflow-hidden">
         {featured.coverImageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element -- base64 cover
-          <img src={featured.coverImageUrl} alt={featured.title} className="h-full w-full object-cover opacity-70" />
+          <HeroParallaxImage src={featured.coverImageUrl} alt={featured.title} />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/40 to-transparent" />
         <div className="absolute bottom-0 left-0 max-w-2xl p-6 sm:p-10">

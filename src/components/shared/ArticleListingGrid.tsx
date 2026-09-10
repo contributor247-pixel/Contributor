@@ -3,6 +3,7 @@ import { getPaginatedArticles } from "@/lib/queries/articles";
 import { ArticleCard } from "@/components/shared/ArticleCard";
 import { Pagination } from "@/components/shared/Pagination";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ScrollRevealGrid } from "@/components/shared/ScrollRevealGrid";
 
 const PER_PAGE = 12;
 
@@ -29,11 +30,11 @@ export async function ArticleListingGrid({ page, basePath, categorySlug }: Artic
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+      <ScrollRevealGrid className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((article) => (
           <ArticleCard key={article.slug} article={article} />
         ))}
-      </div>
+      </ScrollRevealGrid>
       <Pagination currentPage={page} totalPages={totalPages} basePath={basePath} />
     </>
   );
