@@ -109,13 +109,13 @@ export function FeeConfigForm({ config }: FeeConfigFormProps) {
       </section>
 
       <section className="mb-8">
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-serif text-lg font-semibold text-text-heading">Standalone Article Revenue Split</h2>
           <span
             className={
               standaloneBalanced
-                ? "flex items-center gap-1.5 text-xs font-medium text-success"
-                : "flex items-center gap-1.5 text-xs font-medium text-error"
+                ? "flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-success"
+                : "flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-error"
             }
           >
             {standaloneBalanced ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertCircle className="h-3.5 w-3.5" />}
@@ -152,13 +152,13 @@ export function FeeConfigForm({ config }: FeeConfigFormProps) {
       </section>
 
       <section className="mb-8">
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-serif text-lg font-semibold text-text-heading">In-Publication Article Revenue Split</h2>
           <span
             className={
               inPubBalanced
-                ? "flex items-center gap-1.5 text-xs font-medium text-success"
-                : "flex items-center gap-1.5 text-xs font-medium text-error"
+                ? "flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-success"
+                : "flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-error"
             }
           >
             {inPubBalanced ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertCircle className="h-3.5 w-3.5" />}

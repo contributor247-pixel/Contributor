@@ -68,7 +68,21 @@ export function DashboardSidebar({
   const { data: session } = useSession();
   const pathname = usePathname();
 
-  const role = session?.user.role ?? "reader";
+  // Derive the nav set from the URL first — every dashboard route is
+  // already namespaced (/dashboard/admin/**, /dashboard/author/**,
+  // /dashboard/reader/**) — rather than from the session's role. The
+  // session role is only a fallback for the bare /dashboard path,
+  // since relying on useSession() as the primary source flashes the
+  // wrong nav (defaulting to Reader) for a beat on every fresh page
+  // load while the session is still hydrating client-side.
+  const pathRole = pathname.startsWith("/dashboard/admin")
+    ? "admin"
+    : pathname.startsWith("/dashboard/author")
+      ? "author"
+      : pathname.startsWith("/dashboard/reader")
+        ? "reader"
+        : null;
+  const role = pathRole ?? session?.user.role ?? "reader";
   const navItems = role === "admin" ? ADMIN_NAV : role === "author" ? AUTHOR_NAV : READER_NAV;
 
   return (
