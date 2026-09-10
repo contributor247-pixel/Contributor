@@ -37,8 +37,14 @@ async function resolveTagIds(tagNames: string[]): Promise<string[]> {
   return ids;
 }
 
-function buildExcerpt(body: string): string {
-  const plain = body.replace(/\s+/g, " ").trim();
+// body is Tiptap-generated HTML (see EditorCanvas), so the excerpt must
+// strip tags before truncating — otherwise raw markup leaks into card
+// previews and search results instead of readable text.
+function buildExcerpt(bodyHtml: string): string {
+  const plain = bodyHtml
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
   if (plain.length <= 200) return plain;
   return plain.slice(0, 200).replace(/\s+\S*$/, "") + "...";
 }
