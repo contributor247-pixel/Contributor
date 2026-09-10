@@ -8,6 +8,7 @@ import { AuthRequiredListener } from "@/components/shared/AuthRequiredListener";
 import { ToastProvider } from "@/hooks/use-toast";
 import { SearchOverlayProvider } from "@/hooks/use-search-overlay";
 import { SearchOverlay } from "@/components/shared/SearchOverlay";
+import { OfflineBanner } from "@/components/shared/OfflineBanner";
 
 interface ProvidersProps {
   children: React.ReactNode;
@@ -20,6 +21,9 @@ export function Providers({ children, popularPills }: ProvidersProps) {
       <AuthModalProvider>
         <SearchOverlayProvider>
           <ToastProvider>
+            <div className="fixed inset-x-0 top-16 z-30">
+              <OfflineBanner />
+            </div>
             {children}
             <AuthModal />
             <SearchOverlay popularPills={popularPills} />
