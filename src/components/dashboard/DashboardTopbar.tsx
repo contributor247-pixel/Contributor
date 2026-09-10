@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { Menu, LogOut } from "lucide-react";
+import { NotificationBell } from "./NotificationBell";
 
 function initials(name: string | null | undefined, email: string | null | undefined): string {
   if (name) {
@@ -31,7 +32,8 @@ export function DashboardTopbar({ onMenuClick }: { onMenuClick?: () => void }) {
         </Link>
       </div>
       {session?.user && (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <NotificationBell />
           <div className="hidden items-center gap-2.5 sm:flex">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-ink text-xs font-semibold text-white">
               {initials(session.user.name, session.user.email)}

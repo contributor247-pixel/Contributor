@@ -15,6 +15,7 @@ import { publicationSchema, type PublicationInput } from "@/lib/validators/publi
 import { slugify } from "@/lib/slugify";
 import { resend } from "@/lib/resend";
 import { PublicationInviteEmail } from "@/emails/publication-invite";
+import { InviteResponseNoticeEmail } from "@/emails/invite-response-notice";
 
 export type PublicationActionResult =
   | { success: true; publicationId: string; slug: string }
@@ -268,6 +269,33 @@ export async function respondToInviteAction(
       message: `${session.user.name ?? "An author"} ${response} your invite to contribute to ${publication.name}.`,
       linkUrl: `/dashboard/author/publications/${publication.id}`,
     });
+
+    const [owner] = await db.select().from(users).where(eq(users.id, publication.ownerId)).limit(1);
+    if (owner) {
+      const publicationUrl = `${process.env.AUTH_URL ?? "http://localhost:3000"}/dashboard/author/publications/${publication.id}`;
+      try {
+        const html = await render(
+          InviteResponseNoticeEmail({
+            ownerName: owner.name ?? "",
+            authorName: session.user.name ?? "An author",
+            publicationName: publication.name,
+            response,
+            publicationUrl,
+          })
+        );
+        const { error } = await resend.emails.send({
+          from: process.env.RESEND_FROM_EMAIL ?? "Contributor <onboarding@resend.dev>",
+          to: owner.email,
+          subject: `${session.user.name ?? "An author"} ${response} your invite to ${publication.name}`,
+          html,
+        });
+        if (error) {
+          console.error("Failed to send invite response email:", error.message);
+        }
+      } catch (err) {
+        console.error("Failed to send invite response email:", err);
+      }
+    }
   }
 
   return { success: true };

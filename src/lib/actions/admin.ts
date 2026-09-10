@@ -2,6 +2,7 @@
 
 import { and, count, desc, eq, gte, ilike, ne, or, sql as rawSql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { render } from "@react-email/components";
 import { db } from "@/lib/db";
 import {
   users,
@@ -11,8 +12,57 @@ import {
   categories,
   platformConfig,
   ledger,
+  notifications,
 } from "../../../drizzle/schema/index";
 import { requireRole } from "@/lib/permissions";
+import { resend } from "@/lib/resend";
+import { ModerationNoticeEmail } from "@/emails/moderation-notice";
+
+const DASHBOARD_BASE_URL = process.env.AUTH_URL ?? "http://localhost:3000";
+
+async function notifyModerationAction(params: {
+  authorUserId: string;
+  action: "unpublished" | "author_suspended";
+  articleTitle?: string;
+  reason: string;
+}) {
+  const [author] = await db.select().from(users).where(eq(users.id, params.authorUserId)).limit(1);
+  if (!author) return;
+
+  await db.insert(notifications).values({
+    userId: params.authorUserId,
+    type: "moderation_action",
+    message:
+      params.action === "unpublished"
+        ? `Your article "${params.articleTitle}" was unpublished by a moderator.`
+        : "Your account was suspended by a moderator.",
+    linkUrl: params.action === "unpublished" ? "/dashboard/author/articles" : "/dashboard/author/settings",
+  });
+
+  try {
+    const html = await render(
+      ModerationNoticeEmail({
+        recipientName: author.name ?? "",
+        action: params.action,
+        articleTitle: params.articleTitle,
+        reason: params.reason,
+        dashboardUrl: `${DASHBOARD_BASE_URL}/dashboard/author`,
+      })
+    );
+    const { error } = await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL ?? "Contributor <onboarding@resend.dev>",
+      to: author.email,
+      subject:
+        params.action === "unpublished" ? "One of your articles was unpublished" : "Your Contributor account has been suspended",
+      html,
+    });
+    if (error) {
+      console.error("Failed to send moderation notice email:", error.message);
+    }
+  } catch (err) {
+    console.error("Failed to send moderation notice email:", err);
+  }
+}
 
 export type AdminActionResult = { success: true } | { success: false; error: string };
 
@@ -182,6 +232,14 @@ export async function dismissReportAction(reportId: string): Promise<AdminAction
 export async function unpublishArticleAction(reportId: string, articleId: string): Promise<AdminActionResult> {
   const session = await requireRole("admin");
 
+  const [report] = await db.select({ reason: reports.reason }).from(reports).where(eq(reports.id, reportId)).limit(1);
+  const [article] = await db.select({ title: articles.title }).from(articles).where(eq(articles.id, articleId)).limit(1);
+  const [primaryAuthor] = await db
+    .select({ userId: articleAuthors.userId })
+    .from(articleAuthors)
+    .where(and(eq(articleAuthors.articleId, articleId), eq(articleAuthors.isPrimary, true)))
+    .limit(1);
+
   await db.update(articles).set({ status: "unpublished", updatedAt: new Date() }).where(eq(articles.id, articleId));
   await db
     .update(reports)
@@ -192,6 +250,15 @@ export async function unpublishArticleAction(reportId: string, articleId: string
       actionedAt: new Date(),
     })
     .where(eq(reports.id, reportId));
+
+  if (primaryAuthor && article && report) {
+    await notifyModerationAction({
+      authorUserId: primaryAuthor.userId,
+      action: "unpublished",
+      articleTitle: article.title,
+      reason: report.reason,
+    });
+  }
 
   revalidatePath("/dashboard/admin/moderation");
   revalidatePath("/", "layout");
@@ -209,6 +276,8 @@ export async function suspendAuthorForReportAction(
   if (!target) return { success: false, error: "Author not found." };
   if (target.role === "admin") return { success: false, error: "Admin accounts cannot be suspended here." };
 
+  const [report] = await db.select({ reason: reports.reason }).from(reports).where(eq(reports.id, reportId)).limit(1);
+
   await db.update(users).set({ status: "suspended", updatedAt: new Date() }).where(eq(users.id, authorUserId));
   await db
     .update(reports)
@@ -219,6 +288,14 @@ export async function suspendAuthorForReportAction(
       actionedAt: new Date(),
     })
     .where(eq(reports.id, reportId));
+
+  if (report) {
+    await notifyModerationAction({
+      authorUserId,
+      action: "author_suspended",
+      reason: report.reason,
+    });
+  }
 
   revalidatePath("/dashboard/admin/moderation");
   revalidatePath("/dashboard/admin/users");

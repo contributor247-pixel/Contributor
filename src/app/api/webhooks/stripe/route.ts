@@ -1,12 +1,43 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { and, eq } from "drizzle-orm";
+import { render } from "@react-email/components";
 import { db } from "@/lib/db";
-import { purchases, subscriptions } from "../../../../../drizzle/schema/index";
+import { purchases, subscriptions, users, articles, notifications } from "../../../../../drizzle/schema/index";
 import { stripe } from "@/lib/stripe";
 import { calculateAndRecordSplit, distributePooledSubscriptionRevenue } from "@/lib/revenue-split";
+import { resend } from "@/lib/resend";
+import { PurchaseReceiptEmail } from "@/emails/purchase-receipt";
 
 type SubscriptionType = "author_pro" | "publication" | "platform";
+
+const DASHBOARD_BASE_URL = process.env.AUTH_URL ?? "http://localhost:3000";
+
+async function sendPurchaseReceipt(userId: string, itemLabel: string, amountCents: number, dashboardPath: string) {
+  const [recipient] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  if (!recipient) return;
+  try {
+    const html = await render(
+      PurchaseReceiptEmail({
+        recipientName: recipient.name ?? "",
+        itemLabel,
+        amountCents,
+        dashboardUrl: `${DASHBOARD_BASE_URL}${dashboardPath}`,
+      })
+    );
+    const { error } = await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL ?? "Contributor <onboarding@resend.dev>",
+      to: recipient.email,
+      subject: `Your receipt for ${itemLabel}`,
+      html,
+    });
+    if (error) {
+      console.error("Failed to send purchase receipt email:", error.message);
+    }
+  } catch (err) {
+    console.error("Failed to send purchase receipt email:", err);
+  }
+}
 
 function statusFromStripe(status: Stripe.Subscription.Status): "active" | "cancelled" | "past_due" {
   if (status === "active" || status === "trialing") return "active";
@@ -107,8 +138,37 @@ export async function POST(request: Request) {
         const stripeSubscriptionId =
           typeof checkoutSession.subscription === "string" ? checkoutSession.subscription : checkoutSession.subscription?.id;
         if (userId && stripeSubscriptionId) {
+          const [alreadyTracked] = await db
+            .select({ id: subscriptions.id })
+            .from(subscriptions)
+            .where(eq(subscriptions.stripeSubscriptionId, stripeSubscriptionId))
+            .limit(1);
           const stripeSubscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
           await upsertSubscriptionFromStripe(stripeSubscription, userId, subscriptionType, publicationId);
+
+          // Only the first time this Stripe subscription is seen — a
+          // renewal fires invoice.payment_succeeded, not another
+          // checkout.session.completed, so this branch is inherently
+          // create-only, but the existence check above still guards
+          // against a duplicate webhook delivery for the same session.
+          if (!alreadyTracked && checkoutSession.amount_total != null) {
+            const itemLabel =
+              subscriptionType === "author_pro"
+                ? "AuthorPro subscription"
+                : subscriptionType === "platform"
+                  ? "Platform subscription"
+                  : "Publication subscription";
+            await sendPurchaseReceipt(userId, itemLabel, checkoutSession.amount_total, "/dashboard/reader/subscriptions");
+
+            if (subscriptionType === "author_pro") {
+              await db.insert(notifications).values({
+                userId,
+                type: "author_pro_activated",
+                message: "Your AuthorPro subscription is now active — you can publish Premium articles.",
+                linkUrl: "/dashboard/author/billing",
+              });
+            }
+          }
         }
       } else if (checkoutSession.mode === "payment" && checkoutSession.metadata?.purchaseType === "article") {
         const { articleId, userId } = checkoutSession.metadata;
@@ -133,6 +193,14 @@ export async function POST(request: Request) {
               })
               .returning();
             await calculateAndRecordSplit(articleId, checkoutSession.amount_total, "purchase", purchase.id);
+
+            const [article] = await db.select({ title: articles.title }).from(articles).where(eq(articles.id, articleId)).limit(1);
+            await sendPurchaseReceipt(
+              userId,
+              article ? article.title : "your article purchase",
+              checkoutSession.amount_total,
+              "/dashboard/reader/purchases"
+            );
           }
         }
       }
