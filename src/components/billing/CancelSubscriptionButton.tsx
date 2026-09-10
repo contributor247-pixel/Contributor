@@ -28,7 +28,7 @@ export function CancelSubscriptionButton({ subscriptionId }: { subscriptionId: s
         type="button"
         onClick={handleCancel}
         disabled={isPending}
-        className="text-sm text-error underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+        className="inline-flex min-h-11 items-center px-2 text-sm text-error underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isPending ? "Cancelling..." : "Cancel"}
       </button>

@@ -54,7 +54,7 @@ export default async function ModerationQueuePage() {
                   <td className="px-4 py-3 text-right">
                     <Link
                       href={`/dashboard/admin/moderation/${row.id}`}
-                      className="text-text-body underline-offset-2 hover:underline"
+                      className="inline-flex min-h-11 items-center px-2 text-text-body underline-offset-2 hover:underline"
                     >
                       Review
                     </Link>

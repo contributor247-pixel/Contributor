@@ -23,7 +23,7 @@ export function DashboardTopbar({ onMenuClick }: { onMenuClick?: () => void }) {
           type="button"
           aria-label="Open sidebar"
           onClick={onMenuClick}
-          className="flex h-9 w-9 items-center justify-center rounded-[4px] text-text-body hover:bg-bg-muted lg:hidden"
+          className="flex h-11 w-11 items-center justify-center rounded-[4px] text-text-body hover:bg-bg-muted lg:hidden"
         >
           <Menu className="h-5 w-5" aria-hidden="true" />
         </button>
@@ -46,7 +46,7 @@ export function DashboardTopbar({ onMenuClick }: { onMenuClick?: () => void }) {
             type="button"
             aria-label="Sign out"
             onClick={() => signOut()}
-            className="flex h-9 items-center gap-1.5 rounded-[4px] border border-border-strong px-3 text-sm text-text-body transition-colors hover:border-error hover:text-error"
+            className="flex h-11 items-center gap-1.5 rounded-[4px] border border-border-strong px-3 text-sm text-text-body transition-colors hover:border-error hover:text-error sm:h-9"
           >
             <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
             <span className="hidden sm:inline">Sign out</span>

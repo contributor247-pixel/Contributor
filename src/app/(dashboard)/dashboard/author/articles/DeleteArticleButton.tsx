@@ -28,7 +28,7 @@ export function DeleteArticleButton({ articleId, title }: { articleId: string; t
         type="button"
         onClick={handleDelete}
         disabled={isPending}
-        className="text-error underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+        className="flex min-h-11 items-center px-2 text-error underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isPending ? "Deleting..." : "Delete"}
       </button>

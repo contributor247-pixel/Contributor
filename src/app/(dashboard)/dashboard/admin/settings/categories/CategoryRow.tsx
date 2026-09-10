@@ -63,7 +63,7 @@ export function CategoryRow({ id, name, slug, deprecated }: CategoryRowProps) {
               type="button"
               onClick={handleSave}
               disabled={isPending}
-              className="text-xs font-semibold text-success hover:underline disabled:opacity-60"
+              className="inline-flex min-h-11 items-center px-2 text-xs font-semibold text-success hover:underline disabled:opacity-60"
             >
               Save
             </button>
@@ -73,13 +73,17 @@ export function CategoryRow({ id, name, slug, deprecated }: CategoryRowProps) {
                 setValue(name);
                 setIsEditing(false);
               }}
-              className="text-xs text-text-muted hover:underline"
+              className="inline-flex min-h-11 items-center px-2 text-xs text-text-muted hover:underline"
             >
               Cancel
             </button>
           </div>
         ) : (
-          <button type="button" onClick={() => setIsEditing(true)} className="text-left hover:underline">
+          <button
+            type="button"
+            onClick={() => setIsEditing(true)}
+            className="-mx-2 inline-flex min-h-11 items-center px-2 text-left hover:underline"
+          >
             {name}
           </button>
         )}
@@ -101,7 +105,7 @@ export function CategoryRow({ id, name, slug, deprecated }: CategoryRowProps) {
           type="button"
           onClick={handleToggleDeprecated}
           disabled={isPending}
-          className="text-text-body underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex min-h-11 items-center px-2 text-text-body underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isPending ? "Working..." : deprecated ? "Reactivate" : "Deprecate"}
         </button>

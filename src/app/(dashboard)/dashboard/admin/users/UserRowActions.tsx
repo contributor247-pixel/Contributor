@@ -55,7 +55,7 @@ export function UserRowActions({ userId, role, status, emailVerified }: UserRowA
           type="button"
           onClick={handleVerify}
           disabled={isPending}
-          className="text-text-body underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex min-h-11 items-center px-2 text-text-body underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
         >
           Verify
         </button>
@@ -66,8 +66,8 @@ export function UserRowActions({ userId, role, status, emailVerified }: UserRowA
         disabled={isPending}
         className={
           status === "active"
-            ? "text-error underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
-            : "text-success underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+            ? "inline-flex min-h-11 items-center px-2 text-error underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+            : "inline-flex min-h-11 items-center px-2 text-success underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
         }
       >
         {isPending ? "Working..." : status === "active" ? "Suspend" : "Unsuspend"}

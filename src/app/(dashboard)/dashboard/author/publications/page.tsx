@@ -38,7 +38,7 @@ export default async function PublicationsPage() {
               {p.role === "owner" && (
                 <Link
                   href={`/dashboard/author/publications/${p.id}`}
-                  className="text-sm font-medium text-text-body underline-offset-2 hover:underline"
+                  className="inline-flex min-h-11 items-center px-2 text-sm font-medium text-text-body underline-offset-2 hover:underline"
                 >
                   Manage
                 </Link>

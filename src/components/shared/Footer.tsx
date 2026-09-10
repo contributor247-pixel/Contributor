@@ -106,7 +106,7 @@ export function Footer({ latest, featured, suggestions }: FooterProps) {
             </p>
             <Link
               href="/about"
-              className="mt-4 inline-block text-sm font-medium text-white underline-offset-2 hover:underline"
+              className="-ml-2 mt-2 inline-flex min-h-11 items-center px-2 text-sm font-medium text-white underline-offset-2 hover:underline"
             >
               Learn More
             </Link>
@@ -122,28 +122,28 @@ export function Footer({ latest, featured, suggestions }: FooterProps) {
           <p className="text-xs text-white/50">
             Contributor &copy; {new Date().getFullYear()} — All rights reserved.
           </p>
-          <div className="flex items-center gap-4 text-xs text-white/60">
-            <Link href="/terms" className="hover:text-white">
+          <div className="flex items-center gap-1 text-xs text-white/60">
+            <Link href="/terms" className="inline-flex min-h-11 items-center px-2 hover:text-white">
               Terms of Service
             </Link>
-            <Link href="/privacy" className="hover:text-white">
+            <Link href="/privacy" className="inline-flex min-h-11 items-center px-2 hover:text-white">
               Privacy Policy
             </Link>
-            <Link href="/contact" className="hover:text-white">
+            <Link href="/contact" className="inline-flex min-h-11 items-center px-2 hover:text-white">
               Contact
             </Link>
           </div>
-          <div className="flex items-center gap-3">
-            <a href="#" aria-label="Facebook" className="text-white/60 hover:text-white">
+          <div className="flex items-center gap-1">
+            <a href="#" aria-label="Facebook" className="flex h-11 w-11 items-center justify-center text-white/60 hover:text-white">
               <SocialIcon name="facebook" className="h-4 w-4" />
             </a>
-            <a href="#" aria-label="Twitter" className="text-white/60 hover:text-white">
+            <a href="#" aria-label="Twitter" className="flex h-11 w-11 items-center justify-center text-white/60 hover:text-white">
               <SocialIcon name="twitter" className="h-4 w-4" />
             </a>
-            <a href="#" aria-label="Instagram" className="text-white/60 hover:text-white">
+            <a href="#" aria-label="Instagram" className="flex h-11 w-11 items-center justify-center text-white/60 hover:text-white">
               <SocialIcon name="instagram" className="h-4 w-4" />
             </a>
-            <a href="#" aria-label="YouTube" className="text-white/60 hover:text-white">
+            <a href="#" aria-label="YouTube" className="flex h-11 w-11 items-center justify-center text-white/60 hover:text-white">
               <SocialIcon name="youtube" className="h-4 w-4" />
             </a>
           </div>
@@ -160,12 +160,12 @@ function FooterList({ title, articles }: { title: string; articles: ArticleCardD
       {articles.length === 0 ? (
         <p className="text-sm text-white/50">No articles published yet.</p>
       ) : (
-        <ul className="flex flex-col gap-3">
+        <ul className="flex flex-col">
           {articles.map((article) => (
             <li key={article.slug}>
               <Link
                 href={`/article/${article.slug}`}
-                className="text-sm text-white/70 transition-colors hover:text-white"
+                className="-mx-2 flex min-h-11 items-center px-2 py-1.5 text-sm text-white/70 transition-colors hover:text-white"
               >
                 <span className="line-clamp-2">{article.title}</span>
               </Link>

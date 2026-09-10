@@ -77,10 +77,10 @@ export default async function MyArticlesPage() {
                     {new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(row.createdAt)}
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex justify-end gap-3">
+                    <div className="flex justify-end items-center gap-1">
                       <Link
                         href={`/dashboard/author/articles/${row.id}/edit`}
-                        className="text-text-body underline-offset-2 hover:underline"
+                        className="flex min-h-11 items-center px-2 text-text-body underline-offset-2 hover:underline"
                       >
                         Edit
                       </Link>
