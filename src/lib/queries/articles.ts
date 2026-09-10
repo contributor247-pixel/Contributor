@@ -1,9 +1,28 @@
-import { and, count, desc, eq, ilike, inArray, ne, or } from "drizzle-orm";
+import { and, count, desc, eq, ilike, inArray, ne, notInArray, or } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { articles, articleAuthors, articleTags, categories, tags, users, publications } from "../../../drizzle/schema/index";
 import type { ArticleCardData } from "@/components/shared/ArticleCard";
 
 const PUBLISHED = eq(articles.status, "published");
+
+// Article ids authored (solely or jointly) by a currently-suspended
+// user — excluded from every public listing/search/detail query below,
+// per docs/04_MasterBuildGuide.md Step 11 point 1: a suspended
+// Author's articles must be hidden from public view immediately.
+// Re-queried per call rather than cached, since suspension can happen
+// at any time via the admin moderation queue.
+async function suspendedAuthorArticleIds(): Promise<string[]> {
+  const rows = await db
+    .select({ articleId: articleAuthors.articleId })
+    .from(articleAuthors)
+    .innerJoin(users, eq(articleAuthors.userId, users.id))
+    .where(eq(users.status, "suspended"));
+  return [...new Set(rows.map((r) => r.articleId))];
+}
+
+function excludingSuspendedAuthors(where: ReturnType<typeof and>, suspendedIds: string[]) {
+  return suspendedIds.length > 0 ? and(where, notInArray(articles.id, suspendedIds)) : where;
+}
 
 // Fetches the primary author (or the first author row if none flagged
 // primary) for each article id, in one query using inArray rather than
@@ -70,22 +89,26 @@ const baseSelect = {
 };
 
 export async function getRecentArticles(limit: number, excludeId?: string): Promise<ArticleCardData[]> {
+  const suspendedIds = await suspendedAuthorArticleIds();
+  const where = excludeId ? and(PUBLISHED, ne(articles.id, excludeId)) : PUBLISHED;
   const rows = await db
     .select(baseSelect)
     .from(articles)
     .innerJoin(categories, eq(articles.categoryId, categories.id))
-    .where(excludeId ? and(PUBLISHED, ne(articles.id, excludeId)) : PUBLISHED)
+    .where(excludingSuspendedAuthors(where, suspendedIds))
     .orderBy(desc(articles.publishedAt))
     .limit(limit);
   return toCardData(rows);
 }
 
 export async function getArticlesByCategorySlug(categorySlug: string, limit: number): Promise<ArticleCardData[]> {
+  const suspendedIds = await suspendedAuthorArticleIds();
+  const where = and(PUBLISHED, eq(categories.slug, categorySlug));
   const rows = await db
     .select(baseSelect)
     .from(articles)
     .innerJoin(categories, eq(articles.categoryId, categories.id))
-    .where(and(PUBLISHED, eq(categories.slug, categorySlug)))
+    .where(excludingSuspendedAuthors(where, suspendedIds))
     .orderBy(desc(articles.publishedAt))
     .limit(limit);
   return toCardData(rows);
@@ -96,7 +119,9 @@ export async function getPaginatedArticles(
   perPage: number,
   categorySlug?: string
 ): Promise<{ items: ArticleCardData[]; totalCount: number }> {
-  const where = categorySlug ? and(PUBLISHED, eq(categories.slug, categorySlug)) : PUBLISHED;
+  const suspendedIds = await suspendedAuthorArticleIds();
+  const baseWhere = categorySlug ? and(PUBLISHED, eq(categories.slug, categorySlug)) : PUBLISHED;
+  const where = excludingSuspendedAuthors(baseWhere, suspendedIds);
 
   const [{ value: totalCount }] = await db
     .select({ value: count() })
@@ -121,11 +146,14 @@ export async function searchArticles(query: string, limit = 24): Promise<Article
   if (!trimmed) return [];
   const pattern = `%${trimmed}%`;
 
-  const tagMatchArticleIds = await db
-    .select({ articleId: articleTags.articleId })
-    .from(articleTags)
-    .innerJoin(tags, eq(articleTags.tagId, tags.id))
-    .where(ilike(tags.name, pattern));
+  const [tagMatchArticleIds, suspendedIds] = await Promise.all([
+    db
+      .select({ articleId: articleTags.articleId })
+      .from(articleTags)
+      .innerJoin(tags, eq(articleTags.tagId, tags.id))
+      .where(ilike(tags.name, pattern)),
+    suspendedAuthorArticleIds(),
+  ]);
   const tagArticleIds = tagMatchArticleIds.map((r) => r.articleId);
 
   const where = and(
@@ -141,7 +169,7 @@ export async function searchArticles(query: string, limit = 24): Promise<Article
     .select(baseSelect)
     .from(articles)
     .innerJoin(categories, eq(articles.categoryId, categories.id))
-    .where(where)
+    .where(excludingSuspendedAuthors(where, suspendedIds))
     .orderBy(desc(articles.publishedAt))
     .limit(limit);
   return toCardData(rows);
@@ -194,10 +222,17 @@ export async function getArticleBySlug(slug: string) {
       isPrimary: articleAuthors.isPrimary,
       name: users.name,
       avatarUrl: users.avatarUrl,
+      status: users.status,
     })
     .from(articleAuthors)
     .innerJoin(users, eq(articleAuthors.userId, users.id))
     .where(eq(articleAuthors.articleId, row.id));
+
+  // A suspended author's articles are hidden from public view
+  // immediately (docs/04_MasterBuildGuide.md Step 11 point 1) — treat
+  // this exactly like the article not existing, matching every other
+  // public query's behavior via suspendedAuthorArticleIds() above.
+  if (authorRows.some((a) => a.status === "suspended")) return null;
 
   authorRows.sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary));
 
