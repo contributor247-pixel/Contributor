@@ -88,7 +88,7 @@ export function PublishSettingsDrawer(props: PublishSettingsDrawerProps) {
                 </DialogPrimitive.Title>
                 <DialogPrimitive.Close
                   aria-label="Close"
-                  className="flex h-9 w-9 items-center justify-center rounded-[4px] text-text-muted transition-colors hover:bg-bg-muted hover:text-text-body"
+                  className="flex h-11 w-11 items-center justify-center rounded-[4px] text-text-muted transition-colors hover:bg-bg-muted hover:text-text-body sm:h-9 sm:w-9"
                 >
                   <X className="h-5 w-5" aria-hidden="true" />
                 </DialogPrimitive.Close>

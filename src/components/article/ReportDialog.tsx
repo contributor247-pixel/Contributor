@@ -77,7 +77,7 @@ export function ReportDialog({ articleId }: { articleId: string }) {
             </DialogPrimitive.Title>
             <DialogPrimitive.Close
               aria-label="Close"
-              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-muted"
+              className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-bg-muted sm:h-8 sm:w-8"
             >
               <X className="h-4 w-4" />
             </DialogPrimitive.Close>

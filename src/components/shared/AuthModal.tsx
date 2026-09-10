@@ -54,7 +54,7 @@ export function AuthModal() {
               </DialogPrimitive.Title>
               <DialogPrimitive.Close
                 aria-label="Close"
-                className="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full text-white transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-white md:text-ink md:hover:bg-black/5"
+                className="absolute right-4 top-4 z-10 flex h-11 w-11 items-center justify-center rounded-full text-white transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-white md:h-9 md:w-9 md:text-ink md:hover:bg-black/5"
               >
                 <X className="h-5 w-5" />
               </DialogPrimitive.Close>

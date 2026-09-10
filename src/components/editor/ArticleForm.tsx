@@ -189,7 +189,7 @@ export function ArticleForm({ mode, articleId, categories, initialValues }: Arti
             type="button"
             onClick={() => setIsDrawerOpen(true)}
             aria-label="Publish settings"
-            className="flex h-9 items-center gap-2 rounded-[4px] border border-border-strong px-2.5 text-sm font-medium text-text-body transition-colors hover:bg-bg-muted sm:h-10 sm:px-3.5"
+            className="flex h-11 items-center gap-2 rounded-[4px] border border-border-strong px-2.5 text-sm font-medium text-text-body transition-colors hover:bg-bg-muted sm:h-10 sm:px-3.5"
           >
             <Settings2 className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span className="hidden sm:inline">Publish settings</span>
@@ -198,7 +198,7 @@ export function ArticleForm({ mode, articleId, categories, initialValues }: Arti
             type="button"
             onClick={() => handleSubmit("draft")}
             disabled={isSubmitting !== null || categories.length === 0}
-            className="h-9 rounded-[4px] border border-ink px-3 text-sm font-semibold text-ink transition-colors hover:bg-bg-muted disabled:cursor-not-allowed disabled:border-[#D3D0CA] disabled:text-[#B0AFAA] sm:h-10 sm:px-4"
+            className="h-11 rounded-[4px] border border-ink px-3 text-sm font-semibold text-ink transition-colors hover:bg-bg-muted disabled:cursor-not-allowed disabled:border-[#D3D0CA] disabled:text-[#B0AFAA] sm:h-10 sm:px-4"
           >
             {isSubmitting === "draft" ? "Saving..." : "Save Draft"}
           </button>
@@ -206,7 +206,7 @@ export function ArticleForm({ mode, articleId, categories, initialValues }: Arti
             type="button"
             onClick={() => handleSubmit("published")}
             disabled={isSubmitting !== null || categories.length === 0}
-            className="h-9 rounded-[4px] bg-ink px-3 text-sm font-semibold text-white transition-colors hover:bg-primary disabled:cursor-not-allowed disabled:bg-[#C9C9C9] disabled:text-[#8A8A8A] sm:h-10 sm:px-4"
+            className="h-11 rounded-[4px] bg-ink px-3 text-sm font-semibold text-white transition-colors hover:bg-primary disabled:cursor-not-allowed disabled:bg-[#C9C9C9] disabled:text-[#8A8A8A] sm:h-10 sm:px-4"
           >
             {isSubmitting === "published" ? "Publishing..." : "Publish"}
           </button>

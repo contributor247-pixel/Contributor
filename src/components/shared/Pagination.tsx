@@ -44,8 +44,8 @@ export function Pagination({ currentPage, totalPages, basePath }: PaginationProp
             aria-current={p === currentPage ? "page" : undefined}
             className={
               p === currentPage
-                ? "flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white"
-                : "flex h-9 w-9 items-center justify-center rounded-full text-sm text-text-muted transition-colors hover:bg-bg-muted hover:text-text-body"
+                ? "flex h-11 w-11 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white"
+                : "flex h-11 w-11 items-center justify-center rounded-full text-sm text-text-muted transition-colors hover:bg-bg-muted hover:text-text-body"
             }
           >
             {p}
