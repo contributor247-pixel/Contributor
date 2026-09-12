@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import { ComingSoonPlaceholder } from "@/components/shared/ComingSoonPlaceholder";
+import { buildMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = buildMetadata({
+  title: "Privacy Policy",
+  description: "Contributor's Privacy Policy.",
+  path: "/privacy",
+  noIndex: true,
+});
 
 export default function PrivacyPage() {
   return (

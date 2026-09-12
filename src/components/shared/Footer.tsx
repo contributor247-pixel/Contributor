@@ -42,7 +42,7 @@ export function Footer({ latest, featured, suggestions }: FooterProps) {
   };
 
   return (
-    <footer className="bg-ink text-white">
+    <footer data-dark-surface className="bg-ink text-white">
       <div className="mx-auto max-w-[1320px] px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
         <div className="flex flex-col gap-6 border-b border-white/10 pb-12 lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -108,7 +108,7 @@ export function Footer({ latest, featured, suggestions }: FooterProps) {
               href="/about"
               className="-ml-2 mt-2 inline-flex min-h-11 items-center px-2 text-sm font-medium text-white underline-offset-2 hover:underline"
             >
-              Learn More
+              More about Contributor
             </Link>
           </div>
 

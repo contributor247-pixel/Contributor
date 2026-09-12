@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import { ComingSoonPlaceholder } from "@/components/shared/ComingSoonPlaceholder";
+import { buildMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = buildMetadata({
+  title: "Terms of Service",
+  description: "Contributor's Terms of Service.",
+  path: "/terms",
+  noIndex: true,
+});
 
 export default function TermsPage() {
   return (

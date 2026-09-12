@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { getArticleBySlug, getRecentArticles } from "@/lib/queries/articles";
+import { buildMetadata } from "@/lib/seo";
 import { getCommentsForArticle } from "@/lib/actions/comment";
 import { auth } from "@/lib/auth";
 import { getArticleAccessSource } from "@/lib/permissions";
@@ -17,6 +19,24 @@ import { timeAgo } from "@/lib/time-ago";
 interface ArticlePageProps {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ session_id?: string }>;
+}
+
+export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const article = await getArticleBySlug(slug);
+  if (!article) return buildMetadata({ title: "Article", description: "", path: `/article/${slug}`, noIndex: true });
+
+  const description = article.excerpt ?? `Read "${article.title}" on Contributor.`;
+  // coverImageUrl is a base64 data URL (no real file storage exists in
+  // this build) — unusable as an Open Graph image (crawlers need a
+  // fetchable URL, and OG images have size limits a data URI blows
+  // through), so this deliberately falls back to buildMetadata's
+  // default site-wide OG image rather than passing it through broken.
+  return buildMetadata({
+    title: article.title,
+    description,
+    path: `/article/${article.slug}`,
+  });
 }
 
 // Optimistic unlock: right after a successful Stripe Checkout

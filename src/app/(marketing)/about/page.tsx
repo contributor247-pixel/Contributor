@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import { ComingSoonPlaceholder } from "@/components/shared/ComingSoonPlaceholder";
+import { buildMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = buildMetadata({
+  title: "About",
+  description: "About Contributor.",
+  path: "/about",
+  noIndex: true,
+});
 
 export default function AboutPage() {
   return (

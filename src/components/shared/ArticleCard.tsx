@@ -24,6 +24,14 @@ export interface ArticleCardData {
 interface ArticleCardProps {
   article: ArticleCardData;
   showExcerpt?: boolean;
+  // Defaults to h3, correct when the grid sits under a page's own
+  // <h2> section heading (SectionContainer's "More Stories"/"Latest"
+  // on the homepage). Pages whose grid sits directly under the page's
+  // <h1> with no intervening <h2> (Content Listing, category pages,
+  // search, publication page) pass "h2" instead, so the heading
+  // hierarchy never skips a level — caught by a Lighthouse
+  // heading-order audit failure during Step 16.
+  titleAs?: "h2" | "h3";
 }
 
 // Card hover: lift -4px + shadow grow + image scale(1.03), 220ms
@@ -35,8 +43,9 @@ interface ArticleCardProps {
 // nested element Framer Motion's single whileHover variant can't
 // reach without a second motion component — group-hover keeps that
 // in sync with the same hover state for free.
-export function ArticleCard({ article, showExcerpt = true }: ArticleCardProps) {
+export function ArticleCard({ article, showExcerpt = true, titleAs = "h3" }: ArticleCardProps) {
   const prefersReducedMotion = useReducedMotion();
+  const TitleTag = titleAs;
 
   return (
     <motion.article
@@ -64,9 +73,9 @@ export function ArticleCard({ article, showExcerpt = true }: ArticleCardProps) {
           <CategoryPill name={article.category.name} slug={article.category.slug} />
         </div>
         <Link href={`/article/${article.slug}`}>
-          <h3 className="mt-1.5 line-clamp-2 font-serif text-lg font-semibold leading-snug text-text-heading transition-colors group-hover:text-primary">
+          <TitleTag className="mt-1.5 line-clamp-2 font-serif text-lg font-semibold leading-snug text-text-heading transition-colors group-hover:text-primary">
             {article.title}
-          </h3>
+          </TitleTag>
         </Link>
         {showExcerpt && article.excerpt && (
           <p className="mt-1.5 line-clamp-2 text-sm text-text-muted">{article.excerpt}</p>

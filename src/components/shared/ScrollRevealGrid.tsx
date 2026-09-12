@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import type gsapModule from "gsap";
 
 interface ScrollRevealGridProps {
   children: React.ReactNode;
@@ -28,30 +27,41 @@ export function ScrollRevealGrid({ children, className, as = "div" }: ScrollReve
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     if (!ref.current) return;
-
-    gsap.registerPlugin(ScrollTrigger);
     const items = Array.from(ref.current.children);
     if (items.length === 0) return;
 
-    const ctx = gsap.context(() => {
-      gsap.fromTo(
-        items,
-        { opacity: 0, y: 24 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.4,
-          ease: "power2.out",
-          stagger: 0.07,
-          scrollTrigger: {
-            trigger: ref.current,
-            start: "top 85%",
-          },
-        }
-      );
-    }, ref);
+    let ctx: ReturnType<typeof gsapModule.context> | undefined;
+    let cancelled = false;
 
-    return () => ctx.revert();
+    // Dynamically imported so GSAP isn't part of the initial JS bundle
+    // on every page that renders a card grid — see HeroParallaxImage
+    // for the same rationale (Step 16's Lighthouse pass).
+    Promise.all([import("gsap"), import("gsap/ScrollTrigger")]).then(([{ default: gsap }, { ScrollTrigger }]) => {
+      if (cancelled || !ref.current) return;
+      gsap.registerPlugin(ScrollTrigger);
+      ctx = gsap.context(() => {
+        gsap.fromTo(
+          items,
+          { opacity: 0, y: 24 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.4,
+            ease: "power2.out",
+            stagger: 0.07,
+            scrollTrigger: {
+              trigger: ref.current,
+              start: "top 85%",
+            },
+          }
+        );
+      }, ref);
+    });
+
+    return () => {
+      cancelled = true;
+      ctx?.revert();
+    };
   }, []);
 
   return (

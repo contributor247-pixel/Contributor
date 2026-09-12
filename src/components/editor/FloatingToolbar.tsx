@@ -67,6 +67,7 @@ export function FloatingToolbar({ editor }: FloatingToolbarProps) {
     >
       <AnimatePresence>
         <motion.div
+          data-dark-surface
           initial={{ opacity: 0, scale: 0.94 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.12 }}

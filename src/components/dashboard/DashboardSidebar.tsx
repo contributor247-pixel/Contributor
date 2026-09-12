@@ -95,6 +95,7 @@ export function DashboardSidebar({
         />
       )}
       <aside
+        data-dark-surface
         className={[
           "z-40 flex w-64 shrink-0 flex-col bg-ink",
           "fixed inset-y-0 left-0 transition-transform duration-200 lg:static lg:translate-x-0",

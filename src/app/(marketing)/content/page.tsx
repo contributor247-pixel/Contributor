@@ -1,6 +1,14 @@
+import type { Metadata } from "next";
 import { HeroBand } from "@/components/shared/HeroBand";
 import { SectionContainer } from "@/components/shared/SectionContainer";
 import { ArticleListingGrid } from "@/components/shared/ArticleListingGrid";
+import { buildMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = buildMetadata({
+  title: "Content Listing",
+  description: "Browse every published article on Contributor, organized across all topics.",
+  path: "/content",
+});
 
 interface ContentListingPageProps {
   searchParams: Promise<{ page?: string }>;

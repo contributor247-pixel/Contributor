@@ -41,6 +41,7 @@ export function Navbar() {
   return (
     <>
       <header
+        data-dark-surface
         className={[
           "sticky top-0 z-40 bg-ink transition-shadow duration-200",
           isScrolled ? "shadow-[0_2px_16px_rgba(0,0,0,0.25)] backdrop-blur-sm" : "",
@@ -141,6 +142,7 @@ export function Navbar() {
               onClick={() => setIsDrawerOpen(false)}
             />
             <motion.div
+              data-dark-surface
               className="fixed inset-y-0 left-0 z-50 flex w-[80vw] max-w-xs flex-col bg-ink px-6 py-6 lg:hidden"
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}

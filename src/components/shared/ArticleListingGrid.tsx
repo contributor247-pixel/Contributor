@@ -32,7 +32,7 @@ export async function ArticleListingGrid({ page, basePath, categorySlug }: Artic
     <>
       <ScrollRevealGrid className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((article) => (
-          <ArticleCard key={article.slug} article={article} />
+          <ArticleCard key={article.slug} article={article} titleAs="h2" />
         ))}
       </ScrollRevealGrid>
       <Pagination currentPage={page} totalPages={totalPages} basePath={basePath} />

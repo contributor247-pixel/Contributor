@@ -161,6 +161,38 @@
   html {
     @apply font-sans;
   }
+
+  /* App-wide keyboard-focus ring, per docs/04_MasterBuildGuide.md
+     Step 16.7/16.5's requirement that every interactive element has a
+     visible focus state matching the theme doc's focus-ring token
+     (Section 5's input focus spec: border/ring in --color-ink). Scoped
+     to :focus-visible so it only shows for keyboard navigation, not
+     every mouse click — components that already define their own
+     focus-visible treatment (e.g. AuthModal's close button, which
+     needs a light-on-dark ring for its dark-panel placement) simply
+     override this with a more specific rule, so this acts as the
+     baseline rather than fighting bespoke cases. */
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* Ink-on-ink is invisible — any focusable element inside a dark
+     surface (Navbar's bg-ink header, Footer's bg-ink) needs a light
+     ring instead. Scope with data-dark-surface on the container
+     rather than re-deriving background color per element. */
+  [data-dark-surface] a:focus-visible,
+  [data-dark-surface] button:focus-visible,
+  [data-dark-surface] input:focus-visible,
+  [data-dark-surface] [tabindex]:focus-visible {
+    outline-color: white;
+  }
 }
 
 /* Universal tap/click scale-down on every native button, per

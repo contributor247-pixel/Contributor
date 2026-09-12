@@ -51,7 +51,7 @@ export function GoProSection({ monthlyCents, yearlyCents }: GoProSectionProps) {
 
   return (
     <div className="overflow-hidden rounded-[4px] border border-border-strong">
-      <div className="bg-ink px-8 py-8 text-white">
+      <div data-dark-surface className="bg-ink px-8 py-8 text-white">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-subtle">AuthorPro</p>
         <h2 className="mt-2 font-serif text-2xl font-semibold">Write premium stories, earn from your work</h2>
 

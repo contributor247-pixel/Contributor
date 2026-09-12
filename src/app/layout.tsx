@@ -18,8 +18,12 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Contributor",
+  title: {
+    default: "Contributor",
+    template: "%s | Contributor",
+  },
   description: "A content publishing platform for writers and readers.",
+  metadataBase: new URL(process.env.AUTH_URL ?? "http://localhost:3000"),
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {

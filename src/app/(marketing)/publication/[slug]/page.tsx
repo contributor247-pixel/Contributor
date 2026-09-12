@@ -1,12 +1,27 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { Newspaper } from "lucide-react";
 import { getPublicationBySlug, getPublicationArticleCards } from "@/lib/queries/publications";
 import { ArticleCard } from "@/components/shared/ArticleCard";
 import { SectionContainer } from "@/components/shared/SectionContainer";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ScrollRevealGrid } from "@/components/shared/ScrollRevealGrid";
+import { buildMetadata } from "@/lib/seo";
 
 interface PublicationPageProps {
   params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({ params }: PublicationPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const publication = await getPublicationBySlug(slug);
+  if (!publication) return buildMetadata({ title: "Publication", description: "", path: `/publication/${slug}`, noIndex: true });
+
+  return buildMetadata({
+    title: publication.name,
+    description: publication.description ?? `Read ${publication.name} on Contributor.`,
+    path: `/publication/${publication.slug}`,
+  });
 }
 
 export default async function PublicationPage({ params }: PublicationPageProps) {
@@ -46,11 +61,11 @@ export default async function PublicationPage({ params }: PublicationPageProps) 
             description="This Publication hasn't published any articles yet."
           />
         ) : (
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <ScrollRevealGrid className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {articles.map((article) => (
-              <ArticleCard key={article.slug} article={article} />
+              <ArticleCard key={article.slug} article={article} titleAs="h2" />
             ))}
-          </div>
+          </ScrollRevealGrid>
         )}
       </SectionContainer>
     </div>

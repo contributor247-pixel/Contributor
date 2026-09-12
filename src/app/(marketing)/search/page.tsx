@@ -1,8 +1,21 @@
+import type { Metadata } from "next";
 import { SearchX } from "lucide-react";
 import { searchArticles } from "@/lib/queries/articles";
 import { ArticleCard } from "@/components/shared/ArticleCard";
 import { SectionContainer } from "@/components/shared/SectionContainer";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ScrollRevealGrid } from "@/components/shared/ScrollRevealGrid";
+import { buildMetadata } from "@/lib/seo";
+
+// noIndex: search-results pages are thin/duplicate content by nature
+// and shouldn't be indexed individually — the query itself has no
+// stable canonical value worth ranking.
+export const metadata: Metadata = buildMetadata({
+  title: "Search",
+  description: "Search Contributor's published articles.",
+  path: "/search",
+  noIndex: true,
+});
 
 interface SearchPageProps {
   searchParams: Promise<{ q?: string }>;
@@ -14,7 +27,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const results = query.trim() ? await searchArticles(query, 24) : [];
 
   return (
-    <SectionContainer heading={query.trim() ? `Search results for "${query}"` : "Search"}>
+    <SectionContainer headingLevel="h1" heading={query.trim() ? `Search results for "${query}"` : "Search"}>
       {!query.trim() ? (
         <p className="text-text-muted">Enter a search term to find articles.</p>
       ) : results.length === 0 ? (
@@ -25,11 +38,11 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           cta={{ label: "Browse all content", href: "/content" }}
         />
       ) : (
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        <ScrollRevealGrid className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {results.map((article) => (
-            <ArticleCard key={article.slug} article={article} />
+            <ArticleCard key={article.slug} article={article} titleAs="h2" />
           ))}
-        </div>
+        </ScrollRevealGrid>
       )}
     </SectionContainer>
   );

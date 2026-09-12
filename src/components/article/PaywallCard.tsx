@@ -56,7 +56,7 @@ export function PaywallCard({
   return (
     <div className="relative mt-[-100px] flex flex-col items-center rounded-[4px] border border-border-strong bg-white p-8 text-center shadow-lg">
       <span className="flex h-12 w-12 items-center justify-center rounded-full bg-ink text-white">
-        <Lock className="h-5 w-5" />
+        <Lock className="h-5 w-5" aria-hidden="true" />
       </span>
       <h3 className="mt-4 font-serif text-xl font-semibold text-text-heading">This is a Premium article</h3>
       <p className="mt-1 text-sm text-text-muted">Unlock the full story with one of the options below.</p>

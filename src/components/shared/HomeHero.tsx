@@ -10,7 +10,7 @@ interface HomeHeroProps {
 
 export function HomeHero({ featured, rail }: HomeHeroProps) {
   return (
-    <section className="bg-ink text-white">
+    <section data-dark-surface className="bg-ink text-white">
       <Link href={`/article/${featured.slug}`} className="relative block h-[520px] w-full overflow-hidden">
         {featured.coverImageUrl && (
           <HeroParallaxImage src={featured.coverImageUrl} alt={featured.title} />
