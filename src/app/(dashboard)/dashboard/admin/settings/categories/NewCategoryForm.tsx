@@ -26,21 +26,21 @@ export function NewCategoryForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mb-6 flex items-start gap-3">
-      <div>
+    <form onSubmit={handleSubmit} className="mb-6 flex flex-col items-start gap-3 sm:flex-row">
+      <div className="w-full sm:w-64">
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="New category name..."
-          className="h-11 w-64 rounded-[4px] border border-border-strong px-3 text-sm text-text-body placeholder:text-text-muted focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-[#14141a14]"
+          className="h-11 w-full rounded-[4px] border border-border-strong px-3 text-sm text-text-body placeholder:text-text-muted focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-[#14141a14]"
         />
         {error && <p className="mt-1 text-xs text-error">{error}</p>}
       </div>
       <button
         type="submit"
         disabled={isPending || !name.trim()}
-        className="flex h-11 items-center gap-1.5 rounded-[4px] bg-ink px-4 text-sm font-semibold text-white transition-colors hover:bg-primary disabled:cursor-not-allowed disabled:opacity-60"
+        className="flex h-11 w-full items-center justify-center gap-1.5 rounded-[4px] bg-ink px-4 text-sm font-semibold text-white transition-colors hover:bg-primary disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
       >
         <Plus className="h-4 w-4" aria-hidden="true" />
         {isPending ? "Adding..." : "Add Category"}
