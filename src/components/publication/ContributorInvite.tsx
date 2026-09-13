@@ -83,8 +83,8 @@ export function ContributorInvite({ publicationId }: ContributorInviteProps) {
           </ul>
         )}
       </div>
-      {message && <p className="mt-2 text-sm text-success">{message}</p>}
-      {error && <p className="mt-2 text-sm text-error">{error}</p>}
+      {message && <p role="status" className="mt-2 text-sm text-success">{message}</p>}
+      {error && <p role="alert" className="mt-2 text-sm text-error">{error}</p>}
     </div>
   );
 }

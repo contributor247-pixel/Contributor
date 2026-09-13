@@ -61,7 +61,7 @@ export function PaywallCard({
       <h3 className="mt-4 font-serif text-xl font-semibold text-text-heading">This is a Premium article</h3>
       <p className="mt-1 text-sm text-text-muted">Unlock the full story with one of the options below.</p>
 
-      {error && <p className="mt-3 text-sm text-error">{error}</p>}
+      {error && <p role="alert" className="mt-3 text-sm text-error">{error}</p>}
 
       <div className="mt-6 flex w-full max-w-xs flex-col gap-3">
         <MagneticButton

@@ -119,7 +119,11 @@ function DarkPanel({ mode, onSignUpClick }: { mode: "login" | "signup"; onSignUp
 
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
-  return <p className="mt-1 text-sm text-error">{message}</p>;
+  return (
+    <p role="alert" className="mt-1 text-sm text-error">
+      {message}
+    </p>
+  );
 }
 
 function IconInput({

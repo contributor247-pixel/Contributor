@@ -7,6 +7,7 @@ import {
   unpublishArticleAction,
   suspendAuthorForReportAction,
 } from "@/lib/actions/admin";
+import { useToast } from "@/hooks/use-toast";
 
 interface ReportActionsProps {
   reportId: string;
@@ -18,9 +19,10 @@ export function ReportActions({ reportId, articleId, authorUserId }: ReportActio
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { show } = useToast();
 
   const run = (
-    label: string,
+    successMessage: string,
     action: () => Promise<{ success: true } | { success: false; error: string }>
   ) => {
     setError(null);
@@ -30,6 +32,7 @@ export function ReportActions({ reportId, articleId, authorUserId }: ReportActio
         setError(result.error);
         return;
       }
+      show(successMessage);
       router.push("/dashboard/admin/moderation");
       router.refresh();
     });
@@ -40,7 +43,7 @@ export function ReportActions({ reportId, articleId, authorUserId }: ReportActio
       <div className="flex flex-wrap gap-3">
         <button
           type="button"
-          onClick={() => run("dismiss", () => dismissReportAction(reportId))}
+          onClick={() => run("Report dismissed.", () => dismissReportAction(reportId))}
           disabled={isPending}
           className="h-10 rounded-[4px] border border-border-strong px-4 text-sm font-semibold text-text-body transition-colors hover:bg-bg-muted disabled:cursor-not-allowed disabled:opacity-60"
         >
@@ -50,7 +53,7 @@ export function ReportActions({ reportId, articleId, authorUserId }: ReportActio
           type="button"
           onClick={() => {
             if (!window.confirm("Unpublish this article? It will be hidden from public view immediately.")) return;
-            run("unpublish", () => unpublishArticleAction(reportId, articleId));
+            run("Article unpublished.", () => unpublishArticleAction(reportId, articleId));
           }}
           disabled={isPending}
           className="h-10 rounded-[4px] border border-warning bg-warning/10 px-4 text-sm font-semibold text-warning transition-colors hover:bg-warning/20 disabled:cursor-not-allowed disabled:opacity-60"
@@ -62,7 +65,7 @@ export function ReportActions({ reportId, articleId, authorUserId }: ReportActio
             type="button"
             onClick={() => {
               if (!window.confirm("Suspend this author? All of their published articles will be hidden immediately.")) return;
-              run("suspend", () => suspendAuthorForReportAction(reportId, authorUserId));
+              run("Author suspended.", () => suspendAuthorForReportAction(reportId, authorUserId));
             }}
             disabled={isPending}
             className="h-10 rounded-[4px] border border-error bg-error/10 px-4 text-sm font-semibold text-error transition-colors hover:bg-error/20 disabled:cursor-not-allowed disabled:opacity-60"
@@ -72,7 +75,7 @@ export function ReportActions({ reportId, articleId, authorUserId }: ReportActio
         )}
       </div>
       {isPending && <p className="mt-2 text-xs text-text-muted">Working...</p>}
-      {error && <p className="mt-2 text-sm text-error">{error}</p>}
+      {error && <p role="alert" className="mt-2 text-sm text-error">{error}</p>}
     </div>
   );
 }

@@ -33,7 +33,7 @@ export function ErrorBoundary({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center px-6 py-24 text-center">
+    <div role="alert" className="flex flex-col items-center justify-center px-6 py-24 text-center">
       <AlertTriangle className="mb-4 h-12 w-12 text-error" aria-hidden="true" />
       <h1 className="font-serif text-2xl font-semibold text-text-heading">{headline}</h1>
       <p className="mt-2 max-w-sm text-sm text-text-muted">{description}</p>

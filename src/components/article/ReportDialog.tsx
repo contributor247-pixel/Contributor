@@ -108,7 +108,7 @@ export function ReportDialog({ articleId }: { articleId: string }) {
                   className="w-full rounded-[4px] border border-border-strong px-3 py-2 text-sm text-text-body placeholder:text-text-muted focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-[#11111414]"
                 />
               </div>
-              {error && <p className="text-sm text-error">{error}</p>}
+              {error && <p role="alert" className="text-sm text-error">{error}</p>}
               <button
                 type="submit"
                 disabled={isSubmitting}

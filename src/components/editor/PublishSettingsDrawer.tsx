@@ -116,7 +116,7 @@ export function PublishSettingsDrawer(props: PublishSettingsDrawerProps) {
                       ))}
                     </select>
                   )}
-                  {props.categoryError && <p className="mt-1 text-sm text-error">{props.categoryError}</p>}
+                  {props.categoryError && <p role="alert" className="mt-1 text-sm text-error">{props.categoryError}</p>}
                 </div>
 
                 {props.selectablePublications.length > 0 && (
@@ -166,7 +166,7 @@ export function PublishSettingsDrawer(props: PublishSettingsDrawerProps) {
                       className="min-w-[100px] flex-1 border-none bg-transparent text-sm text-text-body placeholder:text-text-muted focus:outline-none"
                     />
                   </div>
-                  {props.tagsError && <p className="mt-1 text-sm text-error">{props.tagsError}</p>}
+                  {props.tagsError && <p role="alert" className="mt-1 text-sm text-error">{props.tagsError}</p>}
                 </div>
 
                 <div className="mb-5">
@@ -178,7 +178,7 @@ export function PublishSettingsDrawer(props: PublishSettingsDrawerProps) {
                     onChange={props.onCoverImageChange}
                     className="block w-full text-sm text-text-body file:mr-4 file:rounded-[4px] file:border-0 file:bg-ink file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-primary"
                   />
-                  {props.coverImageError && <p className="mt-1 text-sm text-error">{props.coverImageError}</p>}
+                  {props.coverImageError && <p role="alert" className="mt-1 text-sm text-error">{props.coverImageError}</p>}
                   {props.coverImageUrl && (
                     // eslint-disable-next-line @next/next/no-img-element -- base64 data URLs aren't supported by next/image's optimizer
                     <img
@@ -216,7 +216,7 @@ export function PublishSettingsDrawer(props: PublishSettingsDrawerProps) {
                           placeholder="4.99"
                           className="h-11 w-40 rounded-[4px] border border-border-strong px-3 text-sm text-text-body focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-[#14141a14]"
                         />
-                        {props.priceError && <p className="mt-1 text-sm text-error">{props.priceError}</p>}
+                        {props.priceError && <p role="alert" className="mt-1 text-sm text-error">{props.priceError}</p>}
                       </div>
                     )}
                   </div>

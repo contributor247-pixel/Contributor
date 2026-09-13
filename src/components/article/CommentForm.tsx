@@ -59,7 +59,7 @@ export function CommentForm({ articleId, onPosted }: CommentFormProps) {
         rows={3}
         className="w-full rounded-[4px] border border-border-strong px-4 py-3 text-sm text-text-body placeholder:text-text-muted focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-[#11111414]"
       />
-      {error && <p className="text-sm text-error">{error}</p>}
+      {error && <p role="alert" className="text-sm text-error">{error}</p>}
       <button
         type="submit"
         disabled={isPending || !body.trim()}

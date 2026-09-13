@@ -57,7 +57,7 @@ export function SubscribeButton({ type, interval, publicationId, label, classNam
       >
         {isSubmitting ? "Redirecting to checkout..." : label}
       </button>
-      {error && <p className="mt-2 text-sm text-error">{error}</p>}
+      {error && <p role="alert" className="mt-2 text-sm text-error">{error}</p>}
     </div>
   );
 }

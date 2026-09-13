@@ -13,6 +13,7 @@ import {
 } from "@/lib/actions/article";
 import { getSelectablePublicationsAction, type SelectablePublication } from "@/lib/actions/publication";
 import { articleSchema } from "@/lib/validators/article";
+import { useToast } from "@/hooks/use-toast";
 import { EditorCanvas } from "./EditorCanvas";
 import { PublishSettingsDrawer } from "./PublishSettingsDrawer";
 
@@ -43,6 +44,7 @@ const MAX_COVER_IMAGE_BYTES = 2 * 1024 * 1024; // 2MB, base64 stub only
 
 export function ArticleForm({ mode, articleId, categories, initialValues }: ArticleFormProps) {
   const router = useRouter();
+  const { show } = useToast();
   const [title, setTitle] = useState(initialValues?.title ?? "");
   const [body, setBody] = useState(initialValues?.body ?? "");
   const [categoryId, setCategoryId] = useState(initialValues?.categoryId ?? "");
@@ -174,6 +176,7 @@ export function ArticleForm({ mode, articleId, categories, initialValues }: Arti
       setFormError(result.error);
       return;
     }
+    show(status === "published" ? "Article published." : "Draft saved.");
     router.push("/dashboard/author/articles");
     router.refresh();
   };
@@ -214,10 +217,10 @@ export function ArticleForm({ mode, articleId, categories, initialValues }: Arti
       </div>
 
       {formError && (
-        <p className="mx-auto mb-4 max-w-[720px] text-sm text-error">{formError}</p>
+        <p role="alert" className="mx-auto mb-4 max-w-[720px] text-sm text-error">{formError}</p>
       )}
       {(errors.title || errors.body || errors.categoryId || errors.tags || errors.priceCents) && (
-        <div className="mx-auto mb-4 max-w-[720px] rounded-[4px] border border-error/30 bg-error/5 p-3 text-sm text-error">
+        <div role="alert" className="mx-auto mb-4 max-w-[720px] rounded-[4px] border border-error/30 bg-error/5 p-3 text-sm text-error">
           {errors.title && <p>{errors.title}</p>}
           {errors.body && <p>{errors.body}</p>}
           {errors.categoryId && <p>{errors.categoryId} — open Publish settings to choose one.</p>}

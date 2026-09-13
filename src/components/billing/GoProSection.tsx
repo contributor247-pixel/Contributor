@@ -103,7 +103,7 @@ export function GoProSection({ monthlyCents, yearlyCents }: GoProSectionProps) {
           ))}
         </ul>
 
-        {error && <p className="mt-4 text-sm text-error">{error}</p>}
+        {error && <p role="alert" className="mt-4 text-sm text-error">{error}</p>}
 
         <MagneticButton
           type="button"

@@ -75,7 +75,7 @@ export function VerifyEmailClient({ status, email }: VerifyEmailClientProps) {
                       {resendState === "sending" ? "Sending..." : "Resend verification email"}
                     </button>
                     {resendState === "error" && (
-                      <p className="mt-3 text-sm text-error">{resendError}</p>
+                      <p role="alert" className="mt-3 text-sm text-error">{resendError}</p>
                     )}
                   </>
                 )}

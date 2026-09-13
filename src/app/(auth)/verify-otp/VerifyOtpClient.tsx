@@ -67,7 +67,7 @@ export function VerifyOtpClient() {
             onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
             className="mb-4 h-14 w-full rounded-[4px] border border-[#D3D0CA] text-center text-2xl tracking-[0.5em] text-[#111114] placeholder:text-[#D3D0CA] focus:border-[#111114] focus:outline-none focus:ring-[3px] focus:ring-[#11111414]"
           />
-          {error && <p className="mb-4 text-sm text-[#D93025]">{error}</p>}
+          {error && <p role="alert" className="mb-4 text-sm text-[#D93025]">{error}</p>}
           <button
             type="submit"
             disabled={isSubmitting || code.length !== 6}
@@ -79,7 +79,7 @@ export function VerifyOtpClient() {
 
         <div className="mt-4">
           {resendState === "sent" ? (
-            <p className="text-sm text-[#1E8E5A]">A new code is on its way.</p>
+            <p role="status" className="text-sm text-[#1E8E5A]">A new code is on its way.</p>
           ) : (
             <button
               type="button"
@@ -90,7 +90,7 @@ export function VerifyOtpClient() {
               {resendState === "sending" ? "Sending..." : "Resend code"}
             </button>
           )}
-          {resendError && <p className="mt-2 text-sm text-[#D93025]">{resendError}</p>}
+          {resendError && <p role="alert" className="mt-2 text-sm text-[#D93025]">{resendError}</p>}
         </div>
       </div>
     </div>

@@ -88,7 +88,7 @@ export function Footer({ latest, featured, suggestions }: FooterProps) {
                   />
                   I have read and agree to the terms &amp; conditions
                 </label>
-                {error && <p className="mt-2 text-xs text-error">{error}</p>}
+                {error && <p role="alert" className="mt-2 text-xs text-error">{error}</p>}
               </>
             )}
           </form>

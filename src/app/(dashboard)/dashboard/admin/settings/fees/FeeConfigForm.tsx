@@ -205,8 +205,8 @@ export function FeeConfigForm({ config }: FeeConfigFormProps) {
         )}
       </section>
 
-      {error && <p className="mb-4 text-sm text-error">{error}</p>}
-      {success && <p className="mb-4 text-sm text-success">Fee configuration saved.</p>}
+      {error && <p role="alert" className="mb-4 text-sm text-error">{error}</p>}
+      {success && <p role="status" className="mb-4 text-sm text-success">Fee configuration saved.</p>}
 
       <button
         type="submit"

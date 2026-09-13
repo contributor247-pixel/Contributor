@@ -72,7 +72,7 @@ export function UserRowActions({ userId, role, status, emailVerified }: UserRowA
       >
         {isPending ? "Working..." : status === "active" ? "Suspend" : "Unsuspend"}
       </button>
-      {error && <span className="text-xs text-error">{error}</span>}
+      {error && <span role="alert" className="text-xs text-error">{error}</span>}
     </div>
   );
 }

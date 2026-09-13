@@ -32,7 +32,7 @@ export function DeleteArticleButton({ articleId, title }: { articleId: string; t
       >
         {isPending ? "Deleting..." : "Delete"}
       </button>
-      {error && <span className="ml-2 text-xs text-error">{error}</span>}
+      {error && <span role="alert" className="ml-2 text-xs text-error">{error}</span>}
     </span>
   );
 }

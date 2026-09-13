@@ -24,7 +24,7 @@ export function InviteResponseCard({ invite, onResponded }: { invite: PendingInv
       <p className="font-medium text-text-heading">{invite.publicationName}</p>
       {invite.publicationDescription && <p className="mt-1 text-sm text-text-muted">{invite.publicationDescription}</p>}
       <p className="mt-1 text-xs text-text-muted">Invited by {invite.ownerName ?? "Unknown"}</p>
-      {error && <p className="mt-2 text-sm text-error">{error}</p>}
+      {error && <p role="alert" className="mt-2 text-sm text-error">{error}</p>}
       <div className="mt-3 flex gap-2">
         <button
           type="button"

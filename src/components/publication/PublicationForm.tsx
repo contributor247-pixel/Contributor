@@ -74,7 +74,7 @@ export function PublicationForm() {
             placeholder="Publication name..."
             className="h-12 w-full rounded-[4px] border border-border-strong px-4 text-text-heading placeholder:text-text-muted focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-[#11111414]"
           />
-          {errors.name && <p className="mt-1 text-sm text-error">{errors.name}</p>}
+          {errors.name && <p role="alert" className="mt-1 text-sm text-error">{errors.name}</p>}
         </div>
 
         <div className="mb-4">
@@ -86,7 +86,7 @@ export function PublicationForm() {
             rows={4}
             className="w-full rounded-[4px] border border-border-strong px-4 py-3 text-text-body placeholder:text-text-muted focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-[#11111414]"
           />
-          {errors.description && <p className="mt-1 text-sm text-error">{errors.description}</p>}
+          {errors.description && <p role="alert" className="mt-1 text-sm text-error">{errors.description}</p>}
         </div>
 
         <div className="mb-6">
@@ -98,14 +98,14 @@ export function PublicationForm() {
             onChange={handleCoverImageChange}
             className="block w-full text-sm text-text-body file:mr-4 file:rounded-[4px] file:border-0 file:bg-ink file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-primary"
           />
-          {coverImageError && <p className="mt-1 text-sm text-error">{coverImageError}</p>}
+          {coverImageError && <p role="alert" className="mt-1 text-sm text-error">{coverImageError}</p>}
           {coverImageUrl && (
             // eslint-disable-next-line @next/next/no-img-element -- base64 data URLs aren't supported by next/image's optimizer
             <img src={coverImageUrl} alt="Cover preview" className="mt-3 h-40 w-full rounded-[4px] object-cover" />
           )}
         </div>
 
-        {formError && <p className="mb-4 text-sm text-error">{formError}</p>}
+        {formError && <p role="alert" className="mb-4 text-sm text-error">{formError}</p>}
 
         <button
           type="submit"

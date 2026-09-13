@@ -35,7 +35,7 @@ export function NewCategoryForm() {
           placeholder="New category name..."
           className="h-11 w-full rounded-[4px] border border-border-strong px-3 text-sm text-text-body placeholder:text-text-muted focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-[#14141a14]"
         />
-        {error && <p className="mt-1 text-xs text-error">{error}</p>}
+        {error && <p role="alert" className="mt-1 text-xs text-error">{error}</p>}
       </div>
       <button
         type="submit"

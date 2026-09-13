@@ -109,7 +109,7 @@ export function CategoryRow({ id, name, slug, deprecated }: CategoryRowProps) {
         >
           {isPending ? "Working..." : deprecated ? "Reactivate" : "Deprecate"}
         </button>
-        {error && <p className="mt-1 text-xs text-error">{error}</p>}
+        {error && <p role="alert" className="mt-1 text-xs text-error">{error}</p>}
       </td>
     </tr>
   );
