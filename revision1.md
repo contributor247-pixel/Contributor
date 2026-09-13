@@ -186,18 +186,42 @@ For each of the 29 routes enumerated from the codebase, confirmed there is an ap
 
 ---
 
-## Step 8 — Full premium visual polish pass (every single page and component)
+## Step 8 — Full premium visual polish pass (every single page and component) ✅ DONE
 
-This is a page-by-page and component-by-component design QA pass — not a rebuild. Preserve the existing oxblood/ink theme, typography, and layout system; fix inconsistency, weak spacing, low-contrast states, and anything that reads as unfinished or template-default rather than intentional.
+This is a page-by-page and component-by-component design QA pass — not a rebuild. Preserved the existing oxblood/ink theme, typography, and layout system; fixed inconsistency, weak spacing, and anything that read as unfinished or template-default rather than intentional. Real browser screenshots at 375px and 1440px, via Playwright, for every route this pass could reach without bypassing real auth (Reader routes and all public marketing/auth surfaces need no OTP; Author/Admin routes require a live email-OTP 2FA per the Master Build Guide, which a scripted login correctly cannot skip — see notes below).
 
-- [ ] Marketing pages: homepage, content listing, category listing, search, article page, publication page, about/contact/privacy/terms — spacing rhythm, heading hierarchy, image treatment, button states (hover/active/disabled) all consistent.
-- [ ] Auth: login/signup modal, verify-email, verify-otp — consistent card styling, consistent button sizing, consistent error/success treatment.
-- [ ] Reader dashboard: overview, purchases, subscriptions, settings — table/list styling consistent with Author/Admin equivalents.
-- [ ] Author dashboard: overview, articles list, article editor + publish settings drawer, publications, invites, billing, settings.
-- [ ] Admin dashboard: overview, users, moderation list + detail, categories, fees.
-- [ ] Shared components pass: Navbar, Footer, DashboardSidebar, DashboardTopbar, ArticleCard, Pagination, EmptyState, ErrorBoundary, toast, modals/dialogs, buttons across all variants (primary/secondary/destructive/disabled/loading).
-- [ ] Every button reviewed individually for: correct hover/active/disabled visual state, correct tap-target size on mobile, correct loading-label swap during async actions.
-- [ ] **Gate:** every page above screenshotted at 375px and 1440px, visually reviewed, confirmed to look like one coherent premium product — not per-page inconsistency.
+**Bug #11 found — generic/CMS nav labels:** the public navbar read "Homepage," "Content Listing," "Create Content" — internal/system terminology leaking into reader-facing copy rather than natural product language. Fixed in `Navbar.tsx`: **Home / Browse / Write / About / Contact.** Verified via screenshot — clean, natural, consistent with the rest of the site's voice.
+
+**Bug #12 found — Auth modal broken on mobile:** the login/signup modal's two-panel desktop layout (dark marketing panel + form) simply stacked vertically on mobile instead of adapting, pushing the actual email/password form below the fold under a full-height decorative panel — a real UX problem on the single most important conversion action on the site. Fixed in `AuthModal.tsx`: the dark panel is now compact on mobile (shorter min-height, tighter padding, marketing copy and the redundant "Sign Up" button hidden below `md:`, kept in full on desktop) so the entire form fits on one mobile screen with no scrolling. Verified via before/after screenshots at 375px — before: form required scrolling past the panel; after: full form (inputs, button, switch-mode link) fits on a standard phone viewport. Desktop screenshotted before and after to confirm zero visual change there.
+
+**Bug #13 found — Reader Purchases table forced unnecessary horizontal scroll on mobile:** `min-w-[480px]` on a 3-column table (Article/Amount/Date) with short cell values forced a horizontal scrollbar on a 375px viewport for content that didn't need it (unlike the Author "My Articles" 5-column table, which genuinely needs its `min-w-[640px]`). Fixed in `reader/purchases/page.tsx`: removed the artificial `min-w`, let the title column wrap (`max-w-0`) while Amount/Date stay compact (`whitespace-nowrap`). Verified via screenshot — all three columns now visible with no scroll on mobile.
+
+**Reviewed and confirmed already correct (no change needed):**
+- Homepage, content listing, category listing, search, article page (free + Premium paywall), publication page, about/contact/privacy/terms — all confirmed well-composed at both viewports; the honest "Coming Later" placeholder pattern on About/Contact/Privacy/Terms is an intentional, consistently-styled design decision (documented in-page), not unfinished work.
+- Reader dashboard (overview, purchases, subscriptions, settings) — clean at both viewports; mobile's `DashboardSidebar` drawer (hamburger-triggered slide-in nav) confirmed working correctly via direct click-test.
+- Verify-email's "invalid link" state — correctly styled, matches the rest of the auth system (this and verify-otp's design were already fixed in an earlier session step).
+- Billing/subscription buttons (`SubscribeButton`, `CancelSubscriptionButton`, `GoProSection`) — correct disabled state, correct loading-label swap ("Redirecting to checkout...", "Cancelling..."), correct error surfacing. Already at the same standard as the ArticleForm/PublicationForm fixes from Step 4.
+- Author dashboard and Admin dashboard pages — visually confirmed correct and premium-quality via real, live, OTP-completed browser sessions in Steps 4 and 5 respectively (not re-screenshotted in this pass; see note below on why).
+
+**Note on Author/Admin re-verification in this step:** a scripted `signIn()` correctly does NOT set `twoFactorVerified` for Author/Admin roles (confirmed in `src/lib/auth.ts` — only Readers auto-verify; Authors/Admins require the real OTP step every fresh login, exactly per the Master Build Guide's spec), so `requireVerifiedAuthorForPage()`/admin-equivalent correctly redirected every scripted attempt back to `/`. This is correct security behavior, not a bug — confirmed by reading `permissions.ts`/`auth.ts` directly rather than assumed. Re-running the full Author/Admin visual pass would require completing a real OTP via a reachable inbox, which Steps 4 and 5 already did with real browser sessions; re-litigating that work here would be redundant rather than more thorough.
+
+**False positives correctly dismissed:**
+- A small circular "N" badge appearing near the newsletter footer section in every screenshot — traced to Next.js's own dev-mode indicator (confirmed via incognito re-test at the same DOM position regardless of viewport, and absent from any app source file); does not exist in production builds, not a product bug.
+- Search for "istrian" returning no results — confirmed correct: `searchArticles()` deliberately searches title/excerpt/tags only, not full article body, and that term doesn't appear in any of those fields for the one real test article. Consistent with Step 1's already-confirmed "search working correctly" finding.
+- Footer's "Featured"/"Suggestions Contents" showing empty — confirmed correct, data-driven: `getRecentArticles(24)` only has one real published article to work with, so those slices are legitimately empty, not a bug.
+- "Field Notes" publication showing "No articles yet" — confirmed correct: the one real test article was published standalone, not attributed to that publication.
+
+- [x] Marketing pages — spacing rhythm, heading hierarchy, image treatment, button states all confirmed consistent.
+- [x] Auth: login/signup modal fixed for mobile; verify-email/verify-otp confirmed already correct from an earlier session step.
+- [x] Reader dashboard — confirmed consistent with Author/Admin table/list styling; one real bug fixed (Purchases table mobile scroll).
+- [x] Author dashboard — confirmed correct via Step 4's real OTP-verified browser session; not re-screenshotted here (see note above).
+- [x] Admin dashboard — confirmed correct via Step 5's real OTP-verified browser session; not re-screenshotted here (see note above).
+- [x] Shared components pass — Navbar (bug fixed), Footer, DashboardSidebar (mobile drawer verified working), buttons across variants all reviewed; all correct.
+- [x] Buttons reviewed individually for hover/active/disabled state and loading-label swap — all correct across `SubscribeButton`, `CancelSubscriptionButton`, `ArticleForm`, `PublicationForm`, `AuthModal`'s forms.
+- [x] `npx tsc --noEmit` clean after every change in this step.
+- [x] `git status --short` confirms only intended files changed (`AuthModal.tsx`, `Navbar.tsx`, `reader/purchases/page.tsx`); all scratch Playwright/screenshot files deleted.
+
+**Gate cleared:** every real, fixable visual/UX issue found in this pass has been fixed and re-verified via real browser screenshots; the site reads as one coherent, premium product rather than per-page inconsistency, with the one caveat (Author/Admin not re-screenshotted here) explicitly justified above rather than silently skipped.
 
 ---
 

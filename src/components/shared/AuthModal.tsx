@@ -80,35 +80,41 @@ export function AuthModal() {
 
 function DarkPanel({ mode, onSignUpClick }: { mode: "login" | "signup"; onSignUpClick: () => void }) {
   return (
-    <div className="relative flex min-h-[240px] shrink-0 items-center justify-center overflow-hidden bg-ink px-8 py-10 text-center md:min-h-0 md:w-[45%] md:px-12">
+    // Kept compact on mobile (shorter min-height, tighter padding, no
+    // duplicate CTA button) so the actual form isn't pushed below the
+    // fold under the marketing copy — the full-size panel is reserved
+    // for md+ where there's room for both without scrolling.
+    <div className="relative flex min-h-[120px] shrink-0 items-center justify-center overflow-hidden bg-ink px-6 py-6 text-center md:min-h-0 md:w-[45%] md:px-12 md:py-10">
       <div
         aria-hidden
         className="absolute inset-0 bg-[radial-gradient(circle_at_30%_15%,rgba(139,30,63,0.35),transparent_55%),radial-gradient(circle_at_80%_85%,rgba(139,30,63,0.18),transparent_50%),linear-gradient(160deg,#1c1c21_0%,#0b0b0d_100%)]"
       />
       <div
         aria-hidden
-        className="absolute inset-6 rounded-[2px] border border-white/[0.08] md:inset-8"
+        className="absolute inset-4 rounded-[2px] border border-white/[0.08] md:inset-8"
       />
-      <div className="relative z-10 flex flex-col items-center gap-4">
-        <span className="font-serif text-xs uppercase tracking-[0.3em] text-primary-subtle/70">Contributor</span>
-        <h2 className="font-serif text-3xl font-semibold text-white md:text-4xl">
+      <div className="relative z-10 flex flex-col items-center gap-2 md:gap-4">
+        <span className="hidden font-serif text-xs uppercase tracking-[0.3em] text-primary-subtle/70 md:block">
+          Contributor
+        </span>
+        <h2 className="font-serif text-xl font-semibold text-white md:text-4xl">
           {mode === "login" ? "Create Account" : "Welcome to Contributor"}
         </h2>
         {mode === "login" ? (
           <>
-            <p className="max-w-xs text-sm text-white/80">
+            <p className="hidden max-w-xs text-sm text-white/80 md:block">
               Sign up to create your account and unlock all the features Contributor has to offer!
             </p>
             <button
               type="button"
               onClick={onSignUpClick}
-              className="mt-2 rounded-[4px] bg-white px-8 py-3 text-sm font-semibold text-ink transition-transform hover:scale-[1.02] focus-visible:outline-2 focus-visible:outline-white"
+              className="mt-2 hidden rounded-[4px] bg-white px-8 py-3 text-sm font-semibold text-ink transition-transform hover:scale-[1.02] focus-visible:outline-2 focus-visible:outline-white md:inline-block"
             >
               Sign Up
             </button>
           </>
         ) : (
-          <p className="max-w-xs text-sm text-white/80">
+          <p className="hidden max-w-xs text-sm text-white/80 md:block">
             Join a community of writers and readers unlocking premium stories and publishing with fellow Authors.
           </p>
         )}

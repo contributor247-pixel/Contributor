@@ -25,7 +25,11 @@ export default async function ReaderPurchasesPage() {
         />
       ) : (
         <div className="overflow-x-auto rounded-[4px] border border-border">
-          <table className="w-full min-w-[480px] border-collapse text-sm">
+          {/* No min-w here (unlike the 5-column Author "My Articles"
+              table, which genuinely needs one) — 3 short columns fit a
+              375px viewport once the title wraps instead of forcing a
+              horizontal scroll for content that doesn't need it. */}
+          <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="border-b border-border bg-bg-muted text-left text-xs uppercase tracking-wide text-text-muted">
                 <th className="px-4 py-3">Article</th>
@@ -36,13 +40,13 @@ export default async function ReaderPurchasesPage() {
             <tbody>
               {purchases.map((p) => (
                 <tr key={p.id} className="border-b border-border last:border-0">
-                  <td className="px-4 py-3 font-medium text-text-heading">
+                  <td className="max-w-0 px-4 py-3 font-medium text-text-heading">
                     <Link href={`/article/${p.articleSlug}`} className="hover:underline">
                       {p.articleTitle}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-text-body">{formatCents(p.amountCents)}</td>
-                  <td className="px-4 py-3 text-text-muted">
+                  <td className="whitespace-nowrap px-4 py-3 text-text-body">{formatCents(p.amountCents)}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-text-muted">
                     {new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(p.createdAt)}
                   </td>
                 </tr>

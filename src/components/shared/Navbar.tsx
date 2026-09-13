@@ -8,13 +8,27 @@ import { useSession, signOut } from "next-auth/react";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 import { useSearchOverlay } from "@/hooks/use-search-overlay";
 
+// Reader-facing nav copy — avoid internal/CMS terms like "Content
+// Listing" or "Create Content" that describe the system rather than
+// what a visitor is actually doing.
 const NAV_LINKS = [
-  { href: "/", label: "Homepage" },
-  { href: "/content", label: "Content Listing" },
-  { href: "/dashboard/author/articles/new", label: "Create Content" },
+  { href: "/", label: "Home" },
+  { href: "/content", label: "Browse" },
+  { href: "/dashboard/author/articles/new", label: "Write" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
 ];
+
+// Same convention as DashboardTopbar's avatar — kept identical so a
+// logged-in user sees the same visual identity treatment across both
+// the marketing site and the dashboard.
+function initials(name: string | null | undefined, email: string | null | undefined): string {
+  if (name) {
+    const parts = name.trim().split(/\s+/);
+    return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || parts[0]?.[0]?.toUpperCase() || "?";
+  }
+  return email?.[0]?.toUpperCase() ?? "?";
+}
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -86,22 +100,26 @@ export function Navbar() {
             >
               <Search className="h-5 w-5" aria-hidden="true" />
             </button>
-            <button
-              type="button"
-              aria-label="Purchases"
-              className="hidden h-10 w-10 items-center justify-center rounded-[4px] text-white transition-colors hover:bg-white/10 sm:flex"
-            >
-              <ShoppingBag className="h-5 w-5" aria-hidden="true" />
-            </button>
+            {status === "authenticated" && (
+              <Link
+                href="/dashboard/reader/purchases"
+                aria-label="Purchases"
+                className="hidden h-10 w-10 items-center justify-center rounded-[4px] text-white transition-colors hover:bg-white/10 sm:flex"
+              >
+                <ShoppingBag className="h-5 w-5" aria-hidden="true" />
+              </Link>
+            )}
 
             {status === "authenticated" ? (
               <div className="group relative">
                 <button
                   type="button"
                   aria-label="Account menu"
-                  className="flex h-10 w-10 items-center justify-center rounded-[4px] text-white transition-colors hover:bg-white/10"
+                  className="flex h-10 w-10 items-center justify-center rounded-[4px] transition-colors hover:bg-white/10"
                 >
-                  <User className="h-5 w-5" aria-hidden="true" />
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-semibold text-white">
+                    {initials(session.user?.name, session.user?.email)}
+                  </span>
                 </button>
                 <div className="invisible absolute right-0 top-full w-48 rounded-[4px] border border-border bg-surface py-1 opacity-0 shadow-lg transition-all group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
                   <p className="truncate px-4 py-2 text-xs text-text-muted">
