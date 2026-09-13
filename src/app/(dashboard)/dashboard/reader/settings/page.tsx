@@ -15,9 +15,11 @@ export default async function ReaderSettingsPage() {
             <dt className="text-text-muted">Name</dt>
             <dd className="font-medium text-text-heading">{session?.user?.name ?? "—"}</dd>
           </div>
-          <div className="flex items-center justify-between">
-            <dt className="text-text-muted">Email</dt>
-            <dd className="font-medium text-text-heading">{session?.user?.email}</dd>
+          <div className="flex items-center justify-between gap-4">
+            <dt className="shrink-0 text-text-muted">Email</dt>
+            <dd className="truncate font-medium text-text-heading" title={session?.user?.email ?? undefined}>
+              {session?.user?.email}
+            </dd>
           </div>
           <div className="flex items-center justify-between">
             <dt className="text-text-muted">Role</dt>
