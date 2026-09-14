@@ -43,15 +43,16 @@ export function Footer({ latest, featured, suggestions }: FooterProps) {
 
   return (
     <footer data-dark-surface className="bg-ink text-white">
-      {/* Newsletter band gets the same oxblood radial-glow treatment as
-          AuthModal's dark panel / AuthorProBand, so the footer's top
-          section reads as one consistent "premium dark panel" language
-          across the site rather than the one remaining flat black
-          rectangle with no texture. */}
-      <div className="relative overflow-hidden border-b border-white/10">
+      {/* Deliberately quieter than AuthorProBand's photographic
+          treatment right above it on the homepage — a bare hairline
+          top-border and a faint single glow rather than a matching
+          full oxblood wash, so the two dark sections read as distinct
+          moments (bold/photographic, then calm/typographic) instead of
+          two near-identical blocks back to back. */}
+      <div className="relative overflow-hidden border-b border-t border-white/10 bg-ink-soft">
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_140%_at_12%_0%,rgba(139,30,63,0.28),transparent_60%),radial-gradient(50%_120%_at_92%_100%,rgba(139,30,63,0.16),transparent_55%)]"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(40%_100%_at_8%_0%,rgba(139,30,63,0.14),transparent_60%)]"
         />
         <div className="relative mx-auto flex max-w-[1320px] flex-col gap-6 px-4 py-14 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8 lg:py-20">
           <div>

@@ -63,7 +63,7 @@ export default async function Home() {
       )}
 
       <SectionContainer>
-        <AuthorProBand />
+        <AuthorProBand backdropImageUrl={hero.coverImageUrl} />
       </SectionContainer>
 
       {editorsFeatured && (

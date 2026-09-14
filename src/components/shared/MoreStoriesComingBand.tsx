@@ -13,8 +13,19 @@ import Link from "next/link";
 // state" apology.
 export function MoreStoriesComingBand() {
   return (
-    <section className="border-y border-border bg-bg-muted">
-      <div className="mx-auto max-w-[1320px] px-4 py-20 text-center sm:px-6 lg:px-8 lg:py-28">
+    <section className="relative overflow-hidden border-y border-border bg-bg-muted">
+      {/* A light-surface counterpart to the dark oxblood-glow sections
+          elsewhere on the page (HomeHero, AuthorProBand, Footer's
+          newsletter band) — same accent color, much lower intensity,
+          so this reads as one deliberate light "beat" in the page's
+          rhythm rather than a flat, untextured grey placeholder next
+          to consistently richer dark sections. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_100%_at_50%_0%,rgba(139,30,63,0.06),transparent_65%)]"
+      />
+      <div className="relative mx-auto max-w-[1320px] px-4 py-20 text-center sm:px-6 lg:px-8 lg:py-28">
+        <div className="mx-auto mb-5 h-px w-10 bg-primary" aria-hidden="true" />
         <p className="text-xs font-semibold uppercase tracking-[0.25em] text-primary">
           Just getting started
         </p>
