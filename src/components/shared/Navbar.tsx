@@ -73,8 +73,14 @@ export function Navbar() {
             </button>
             <Link
               href="/"
-              className="font-serif text-xl font-semibold text-white"
+              className="flex items-center gap-2.5 font-serif text-xl font-semibold text-white"
             >
+              <span
+                aria-hidden="true"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-primary font-serif text-base font-semibold text-white"
+              >
+                C
+              </span>
               Contributor
             </Link>
           </div>
@@ -171,7 +177,13 @@ export function Navbar() {
               }}
             >
               <div className="mb-8 flex items-center justify-between">
-                <span className="font-serif text-lg font-semibold text-white">
+                <span className="flex items-center gap-2 font-serif text-lg font-semibold text-white">
+                  <span
+                    aria-hidden="true"
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] bg-primary font-serif text-sm font-semibold text-white"
+                  >
+                    C
+                  </span>
                   Contributor
                 </span>
                 <button

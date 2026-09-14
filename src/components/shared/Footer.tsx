@@ -118,7 +118,15 @@ export function Footer({ latest, featured, suggestions }: FooterProps) {
         </div>
 
         <div className="flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 sm:flex-row">
-          <span className="font-serif text-lg font-semibold">Contributor</span>
+          <span className="flex items-center gap-2 font-serif text-lg font-semibold">
+            <span
+              aria-hidden="true"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] bg-primary font-serif text-sm font-semibold text-white"
+            >
+              C
+            </span>
+            Contributor
+          </span>
           <p className="text-xs text-white/50">
             Contributor &copy; {new Date().getFullYear()} — All rights reserved.
           </p>

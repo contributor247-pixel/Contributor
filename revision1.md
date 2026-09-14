@@ -225,11 +225,26 @@ This is a page-by-page and component-by-component design QA pass — not a rebui
 
 ---
 
-## Step 9 — Logo
+## Step 9 — Logo ✅ DONE
 
-- [ ] Determine whether to generate a logo directly or produce a prompt for the user to generate one, based on available tooling.
-- [ ] Deliver either the generated logo asset (SVG/PNG, transparent background, sized correctly for navbar + favicon use) or a written prompt with exact concept, palette (oxblood #8b1e3f / ink #14141a), style, and aspect ratio guidance.
-- [ ] **Gate:** logo or logo prompt delivered and reviewed.
+No AI image-generation tool was available in this environment, so rather than hand back a written prompt for someone else to run later, built a real, production-ready logo directly — a typographic mark, not an illustration, so it doesn't need one. Concept: a monogram "C" in a rounded-square oxblood (#8b1e3f) tile, set in Fraunces (the site's own existing serif, per `layout.tsx`'s font config) at 600 weight, paired with the existing "Contributor" wordmark — extending the brand identity already established site-wide rather than replacing it with something unrelated.
+
+**Assets delivered** (`public/logo/`):
+- `mark.svg` — standalone monogram, for favicon/app-icon use.
+- `lockup-light.svg` / `lockup-dark.svg` — full mark + wordmark lockup, for light and dark surfaces.
+- `src/app/icon.png` (32×32) and `src/app/apple-icon.png` (180×180) — replaces the stock, never-customized Next.js default `favicon.ico` (deleted). Next.js auto-generates the correct `<link rel="icon">`/`<link rel="apple-touch-icon">` tags from these with zero config — verified via `curl` against the real page `<head>` output.
+
+**Wired into the live site** (per explicit user confirmation to do this now rather than defer it): the monogram tile now appears next to the "Contributor" wordmark in the desktop Navbar, the mobile nav drawer, and the Footer's bottom bar — the three places the brand mark actually appears as a mark (the Footer's separate "CONTRIBUTOR" column heading is site-copy, not a logo placement, left as plain text). Implemented as a small inline `bg-primary` tile using the same design tokens as the rest of the UI (not an `<img>` of the SVG) so it always exactly matches the current theme/oxblood value with no separate asset to keep in sync.
+
+**Verification:**
+- [x] Real Playwright screenshots confirm the mark renders correctly at 64px (full size) and 24px (favicon scale) with no clipping.
+- [x] Fixed one real bug in my own first-draft SVG before shipping it: the lockup's `viewBox` was too narrow and clipped "Contributor" to "Contribut" — caught by screenshotting the actual rendered asset rather than trusting the source, then fixed and re-verified.
+- [x] Confirmed via `curl` that `icon.png`/`apple-icon.png` are correctly auto-linked in the real page `<head>` (`<link rel="icon" ... sizes="32x32">`, `<link rel="apple-touch-icon" ... sizes="180x180">`).
+- [x] Screenshotted the wired-in Navbar (desktop), mobile drawer, and Footer — mark renders cleanly at correct size in all three placements, no layout shift or crowding.
+- [x] `npx tsc --noEmit` clean.
+- [x] `git status --short` confirms only intended files changed; scratch preview/verification files deleted.
+
+**Gate cleared:** logo delivered as real, working, verified assets (not just a prompt) and applied to the live site with explicit user sign-off on scope.
 
 ---
 

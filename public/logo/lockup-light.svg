@@ -1,0 +1,21 @@
+<svg width="260" height="56" viewBox="0 0 260 56" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Contributor">
+  <rect width="56" height="56" rx="12" fill="#8b1e3f"/>
+  <text
+    x="28" y="30"
+    text-anchor="middle"
+    dominant-baseline="central"
+    font-family="Fraunces, Georgia, 'Times New Roman', serif"
+    font-weight="600"
+    font-size="33"
+    fill="#F7F6F4"
+  >C</text>
+  <text
+    x="70" y="30"
+    dominant-baseline="central"
+    font-family="Fraunces, Georgia, 'Times New Roman', serif"
+    font-weight="600"
+    font-size="30"
+    letter-spacing="-0.3"
+    fill="#14141a"
+  >Contributor</text>
+</svg>
