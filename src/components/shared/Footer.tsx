@@ -43,15 +43,27 @@ export function Footer({ latest, featured, suggestions }: FooterProps) {
 
   return (
     <footer data-dark-surface className="bg-ink text-white">
-      <div className="mx-auto max-w-[1320px] px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
-        <div className="flex flex-col gap-6 border-b border-white/10 pb-12 lg:flex-row lg:items-center lg:justify-between">
+      {/* Newsletter band gets the same oxblood radial-glow treatment as
+          AuthModal's dark panel / AuthorProBand, so the footer's top
+          section reads as one consistent "premium dark panel" language
+          across the site rather than the one remaining flat black
+          rectangle with no texture. */}
+      <div className="relative overflow-hidden border-b border-white/10">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_140%_at_12%_0%,rgba(139,30,63,0.28),transparent_60%),radial-gradient(50%_120%_at_92%_100%,rgba(139,30,63,0.16),transparent_55%)]"
+        />
+        <div className="relative mx-auto flex max-w-[1320px] flex-col gap-6 px-4 py-14 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8 lg:py-20">
           <div>
-            <h2 className="font-serif text-2xl font-semibold sm:text-3xl">
-              Get Inside the hustle.
+            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-primary-subtle">
+              The Contributor Brief
+            </p>
+            <h2 className="mt-3 max-w-md text-balance font-serif text-3xl font-semibold leading-[1.1] sm:text-4xl">
+              One email, the stories worth your time.
             </h2>
-            <p className="mt-2 max-w-md text-sm text-white/70">
-              Subscribe to Contributor for the latest updates, insightful articles, and exclusive
-              content delivered straight to your inbox. Join our community today!
+            <p className="mt-3 max-w-md text-sm leading-relaxed text-white/65">
+              A short weekly note from the Editors — new Publications, Premium releases, and the
+              pieces our own team keeps re-reading.
             </p>
           </div>
 
@@ -62,13 +74,14 @@ export function Footer({ latest, featured, suggestions }: FooterProps) {
               </p>
             ) : (
               <>
-                <div className="flex h-12 items-stretch overflow-hidden rounded-[4px] border border-white/20 bg-white/5">
+                <div className="flex h-12 items-stretch overflow-hidden rounded-[4px] border border-white/20 bg-white/[0.06] backdrop-blur-sm focus-within:border-white/40">
                   <input
+                    id="footer-newsletter-email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Please enter your e-mail address"
-                    className="flex-1 bg-transparent px-4 text-sm text-white placeholder:text-white/50 focus:outline-none"
+                    placeholder="you@email.com"
+                    className="flex-1 bg-transparent px-4 text-sm text-white placeholder:text-white/45 focus:outline-none"
                   />
                   <button
                     type="submit"
@@ -79,8 +92,9 @@ export function Footer({ latest, featured, suggestions }: FooterProps) {
                     <ArrowRight className="h-4 w-4" aria-hidden="true" />
                   </button>
                 </div>
-                <label className="mt-3 flex items-start gap-2 text-xs text-white/60">
+                <label htmlFor="footer-newsletter-agree" className="mt-3 flex items-start gap-2 text-xs text-white/55">
                   <input
+                    id="footer-newsletter-agree"
                     type="checkbox"
                     checked={agreed}
                     onChange={(e) => setAgreed(e.target.checked)}
@@ -93,44 +107,43 @@ export function Footer({ latest, featured, suggestions }: FooterProps) {
             )}
           </form>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 gap-10 py-12 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mx-auto max-w-[1320px] px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-white/90">
+            <span className="flex items-center gap-2 font-serif text-lg font-semibold text-white">
+              <span
+                aria-hidden="true"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] bg-primary font-serif text-sm font-semibold text-white"
+              >
+                C
+              </span>
               Contributor
-            </h3>
-            <p className="text-sm leading-relaxed text-white/60">
-              Contributor is a publishing platform where writers share ideas and readers discover
-              premium, editorially-driven content — free to read, or unlocked article by article,
+            </span>
+            <p className="mt-4 text-sm leading-relaxed text-white/60">
+              A publishing platform where writers share ideas and readers discover premium,
+              editorially-driven content — free to read, or unlocked article by article,
               Publication by Publication, or platform-wide.
             </p>
             <Link
               href="/about"
-              className="-ml-2 mt-2 inline-flex min-h-11 items-center px-2 text-sm font-medium text-white underline-offset-2 hover:underline"
+              className="-ml-2 mt-3 inline-flex min-h-11 items-center px-2 text-sm font-semibold text-primary-subtle underline-offset-2 hover:underline"
             >
-              More about Contributor
+              More about Contributor &rarr;
             </Link>
           </div>
 
-          <FooterList title="Latest Contents" articles={latest} />
+          <FooterList title="Latest" articles={latest} />
           <FooterFeatured article={featured} />
-          <FooterList title="Suggestions Contents" articles={suggestions} />
+          <FooterList title="Worth a Read" articles={suggestions} />
         </div>
 
         <div className="flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 sm:flex-row">
-          <span className="flex items-center gap-2 font-serif text-lg font-semibold">
-            <span
-              aria-hidden="true"
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] bg-primary font-serif text-sm font-semibold text-white"
-            >
-              C
-            </span>
-            Contributor
-          </span>
-          <p className="text-xs text-white/50">
+          <p className="order-2 text-xs text-white/45 sm:order-1">
             Contributor &copy; {new Date().getFullYear()} — All rights reserved.
           </p>
-          <div className="flex items-center gap-1 text-xs text-white/60">
+          <div className="order-1 flex items-center gap-1 text-xs text-white/60 sm:order-2">
             <Link href="/terms" className="inline-flex min-h-11 items-center px-2 hover:text-white">
               Terms of Service
             </Link>
@@ -141,17 +154,22 @@ export function Footer({ latest, featured, suggestions }: FooterProps) {
               Contact
             </Link>
           </div>
-          <div className="flex items-center gap-1">
-            <a href="#" aria-label="Facebook" className="flex h-11 w-11 items-center justify-center text-white/60 hover:text-white">
+          {/* No real Contributor social accounts exist yet — these are
+              placeholder links (kept visible per explicit product
+              decision, since a bare footer with no social row reads as
+              even less finished at this stage) and must be pointed at
+              the real profiles before launch. */}
+          <div className="order-3 flex items-center gap-1">
+            <a href="#" aria-label="Facebook" className="flex h-11 w-11 items-center justify-center text-white/50 transition-colors hover:text-primary-subtle">
               <SocialIcon name="facebook" className="h-4 w-4" />
             </a>
-            <a href="#" aria-label="Twitter" className="flex h-11 w-11 items-center justify-center text-white/60 hover:text-white">
+            <a href="#" aria-label="Twitter" className="flex h-11 w-11 items-center justify-center text-white/50 transition-colors hover:text-primary-subtle">
               <SocialIcon name="twitter" className="h-4 w-4" />
             </a>
-            <a href="#" aria-label="Instagram" className="flex h-11 w-11 items-center justify-center text-white/60 hover:text-white">
+            <a href="#" aria-label="Instagram" className="flex h-11 w-11 items-center justify-center text-white/50 transition-colors hover:text-primary-subtle">
               <SocialIcon name="instagram" className="h-4 w-4" />
             </a>
-            <a href="#" aria-label="YouTube" className="flex h-11 w-11 items-center justify-center text-white/60 hover:text-white">
+            <a href="#" aria-label="YouTube" className="flex h-11 w-11 items-center justify-center text-white/50 transition-colors hover:text-primary-subtle">
               <SocialIcon name="youtube" className="h-4 w-4" />
             </a>
           </div>
@@ -161,19 +179,33 @@ export function Footer({ latest, featured, suggestions }: FooterProps) {
   );
 }
 
+// Shared small-caps column header with the same oxblood rule marker
+// used by HomeHero's eyebrow, so every footer column reads as one
+// deliberate typographic system instead of a plain uppercase label.
+function FooterColumnTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <h3 className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-white/50">
+      <span className="h-px w-4 bg-primary" aria-hidden="true" />
+      {children}
+    </h3>
+  );
+}
+
 function FooterList({ title, articles }: { title: string; articles: ArticleCardData[] }) {
   return (
     <div>
-      <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-white/90">{title}</h3>
+      <FooterColumnTitle>{title}</FooterColumnTitle>
       {articles.length === 0 ? (
-        <p className="text-sm text-white/50">No articles published yet.</p>
+        <p className="text-sm leading-relaxed text-white/40">
+          Nothing here yet — the first stories are still being written.
+        </p>
       ) : (
-        <ul className="flex flex-col">
+        <ul className="flex flex-col divide-y divide-white/[0.06]">
           {articles.map((article) => (
             <li key={article.slug}>
               <Link
                 href={`/article/${article.slug}`}
-                className="-mx-2 flex min-h-11 items-center px-2 py-1.5 text-sm text-white/70 transition-colors hover:text-white"
+                className="-mx-2 flex min-h-11 items-center px-2 py-2 text-sm text-white/70 transition-colors hover:text-primary-subtle"
               >
                 <span className="line-clamp-2">{article.title}</span>
               </Link>
@@ -188,9 +220,11 @@ function FooterList({ title, articles }: { title: string; articles: ArticleCardD
 function FooterFeatured({ article }: { article: ArticleCardData | null }) {
   return (
     <div>
-      <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-white/90">Featured</h3>
+      <FooterColumnTitle>Featured</FooterColumnTitle>
       {!article ? (
-        <p className="text-sm text-white/50">Nothing featured yet.</p>
+        <p className="text-sm leading-relaxed text-white/40">
+          Reserved for the story our Editors pick next.
+        </p>
       ) : (
         <Link href={`/article/${article.slug}`} className="group block">
           <div className="aspect-[3/4] w-full overflow-hidden rounded-[4px] bg-white/10">
