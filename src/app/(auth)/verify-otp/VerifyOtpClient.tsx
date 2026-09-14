@@ -48,7 +48,8 @@ export function VerifyOtpClient({ redirectTo = "/" }: { redirectTo?: string }) {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-bg px-6 text-center">
-      <p className="mb-6 font-serif text-xl font-semibold text-text-heading">Contributor</p>
+      {/* eslint-disable-next-line @next/next/no-img-element -- static asset in public/, not worth next/image's overhead for a fixed-size auth-page logo */}
+      <img src="/logo/logo.png" alt="Contributor" className="mb-6 h-7 w-auto" />
       <div className="w-full max-w-sm rounded-[4px] border border-border bg-surface p-10 shadow-sm">
         <h1 className="mb-2 font-serif text-2xl font-semibold text-text-heading">
           Enter your code

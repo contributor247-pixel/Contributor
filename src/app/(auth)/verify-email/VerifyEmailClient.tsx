@@ -29,6 +29,8 @@ export function VerifyEmailClient({ status, email }: VerifyEmailClientProps) {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-bg px-6 text-center">
+      {/* eslint-disable-next-line @next/next/no-img-element -- static asset in public/, not worth next/image's overhead for a fixed-size auth-page logo */}
+      <img src="/logo/logo.png" alt="Contributor" className="mb-6 h-7 w-auto" />
       <div className="max-w-md rounded-[4px] border border-border bg-surface p-10 shadow-sm">
         {status === "success" ? (
           <>
