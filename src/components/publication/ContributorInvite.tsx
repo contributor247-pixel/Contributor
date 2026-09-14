@@ -14,6 +14,7 @@ export function ContributorInvite({ publicationId }: ContributorInviteProps) {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleChange = (value: string) => {
@@ -23,12 +24,18 @@ export function ContributorInvite({ publicationId }: ContributorInviteProps) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (!value.trim()) {
       setResults([]);
+      setIsSearching(false);
       return;
     }
     debounceRef.current = setTimeout(async () => {
-      const res = await fetch(`/api/users/search?q=${encodeURIComponent(value)}`);
-      const data = await res.json();
-      setResults(data.results ?? []);
+      setIsSearching(true);
+      try {
+        const res = await fetch(`/api/users/search?q=${encodeURIComponent(value)}`);
+        const data = await res.json();
+        setResults(data.results ?? []);
+      } finally {
+        setIsSearching(false);
+      }
     }, 300);
   };
 
@@ -83,6 +90,7 @@ export function ContributorInvite({ publicationId }: ContributorInviteProps) {
           </ul>
         )}
       </div>
+      {isSearching && <p className="mt-2 text-xs text-text-muted">Searching...</p>}
       {message && <p role="status" className="mt-2 text-sm text-success">{message}</p>}
       {error && <p role="alert" className="mt-2 text-sm text-error">{error}</p>}
     </div>

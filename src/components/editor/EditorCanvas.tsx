@@ -7,6 +7,7 @@ import Image from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
 import { ImageIcon } from "lucide-react";
 import { FloatingToolbar } from "./FloatingToolbar";
+import { useToast } from "@/hooks/use-toast";
 
 const MAX_INLINE_IMAGE_BYTES = 4 * 1024 * 1024; // 4MB, base64 stub — same approach as the cover image upload
 
@@ -24,6 +25,7 @@ interface EditorCanvasProps {
 // (confirmed against that UX description before building).
 export function EditorCanvas({ title, onTitleChange, content, onContentChange, onEditorReady }: EditorCanvasProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { showError } = useToast();
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -49,12 +51,22 @@ export function EditorCanvas({ title, onTitleChange, content, onContentChange, o
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file || !editor) return;
-    if (!file.type.startsWith("image/")) return;
-    if (file.size > MAX_INLINE_IMAGE_BYTES) return;
+    // Both of these previously failed silently — the picker would just
+    // close with no image inserted and no indication why, per the
+    // "File Upload UI" gap this audit specifically flagged.
+    if (!file.type.startsWith("image/")) {
+      showError("That file isn't an image. Choose a JPG, PNG, GIF, or WEBP.");
+      return;
+    }
+    if (file.size > MAX_INLINE_IMAGE_BYTES) {
+      showError(`That image is too large — inline images must be under ${MAX_INLINE_IMAGE_BYTES / 1024 / 1024}MB.`);
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
       editor.chain().focus().setImage({ src: reader.result as string }).run();
     };
+    reader.onerror = () => showError("Couldn't read that image. Please try again.");
     reader.readAsDataURL(file);
   };
 
