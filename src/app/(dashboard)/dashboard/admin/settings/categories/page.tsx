@@ -2,6 +2,7 @@ import { Tags } from "lucide-react";
 import { requireRoleForPage } from "@/lib/require-page-auth";
 import { getAdminCategories } from "@/lib/actions/admin";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { TableRefreshButton } from "@/components/shared/TableRefreshButton";
 import { NewCategoryForm } from "./NewCategoryForm";
 import { CategoryRow } from "./CategoryRow";
 
@@ -11,7 +12,10 @@ export default async function AdminCategoriesPage() {
 
   return (
     <div>
-      <h1 className="mb-6 font-serif text-2xl font-semibold text-text-heading">Categories</h1>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <h1 className="font-serif text-2xl font-semibold text-text-heading">Categories</h1>
+        <TableRefreshButton />
+      </div>
 
       <NewCategoryForm />
 

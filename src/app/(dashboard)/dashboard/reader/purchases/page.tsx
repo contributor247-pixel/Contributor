@@ -3,6 +3,7 @@ import { ShoppingBag } from "lucide-react";
 import { requireAuthForPage } from "@/lib/require-page-auth";
 import { getMyPurchasesAction } from "@/lib/actions/dashboard-overview";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { TableRefreshButton } from "@/components/shared/TableRefreshButton";
 
 function formatCents(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`;
@@ -14,7 +15,10 @@ export default async function ReaderPurchasesPage() {
 
   return (
     <div>
-      <h1 className="mb-6 font-serif text-2xl font-semibold text-text-heading">Purchases</h1>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <h1 className="font-serif text-2xl font-semibold text-text-heading">Purchases</h1>
+        <TableRefreshButton />
+      </div>
 
       {purchases.length === 0 ? (
         <EmptyState

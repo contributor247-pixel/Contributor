@@ -2,6 +2,7 @@ import { Users as UsersIcon } from "lucide-react";
 import { requireRoleForPage } from "@/lib/require-page-auth";
 import { getAdminUsers } from "@/lib/actions/admin";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { TableRefreshButton } from "@/components/shared/TableRefreshButton";
 import { UserRowActions } from "./UserRowActions";
 import { SearchBar } from "./SearchBar";
 
@@ -30,7 +31,10 @@ export default async function AdminUsersPage({
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-serif text-2xl font-semibold text-text-heading">Users</h1>
-        <SearchBar initialQuery={search} />
+        <div className="flex items-center gap-2">
+          <SearchBar initialQuery={search} />
+          <TableRefreshButton />
+        </div>
       </div>
 
       {items.length === 0 ? (

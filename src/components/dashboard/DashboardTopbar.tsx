@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { Menu, LogOut } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
@@ -17,21 +16,16 @@ export function DashboardTopbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const { data: session } = useSession();
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-border bg-surface px-4 sm:px-6">
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          aria-label="Open sidebar"
-          onClick={onMenuClick}
-          className="flex h-11 w-11 items-center justify-center rounded-[4px] text-text-body hover:bg-bg-muted lg:hidden"
-        >
-          <Menu className="h-5 w-5" aria-hidden="true" />
-        </button>
-        <Link href="/" className="flex items-center">
-          {/* eslint-disable-next-line @next/next/no-img-element -- static asset in public/, not worth next/image's overhead for a fixed-size topbar logo */}
-          <img src="/logo/logo.png" alt="Contributor" className="h-7 w-auto" />
-        </Link>
-      </div>
+    <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-surface/95 px-4 backdrop-blur-sm sm:px-6">
+      <button
+        type="button"
+        aria-label="Open sidebar"
+        onClick={onMenuClick}
+        className="flex h-11 w-11 items-center justify-center rounded-[4px] text-text-body hover:bg-bg-muted lg:hidden"
+      >
+        <Menu className="h-5 w-5" aria-hidden="true" />
+      </button>
+      <span className="hidden lg:block" aria-hidden="true" />
       {session?.user && (
         <div className="flex items-center gap-2 sm:gap-3">
           <NotificationBell />

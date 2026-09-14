@@ -5,6 +5,7 @@ import { requireVerifiedAuthorForPage } from "@/lib/require-page-auth";
 import { db } from "@/lib/db";
 import { articles, articleAuthors, categories } from "../../../../../../drizzle/schema/index";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { TableRefreshButton } from "@/components/shared/TableRefreshButton";
 import { DeleteArticleButton } from "./DeleteArticleButton";
 
 export default async function MyArticlesPage() {
@@ -24,18 +25,32 @@ export default async function MyArticlesPage() {
     .where(eq(articleAuthors.userId, session!.user.id))
     .orderBy(articles.createdAt);
 
-  const visibleRows = rows.filter((r) => r.status !== "unpublished");
+  // Previously filtered out every "unpublished" row, but that status
+  // covers two very different cases the schema doesn't distinguish: an
+  // Author soft-deleting their own draft/article (see the "unpublished"
+  // comment in src/lib/actions/article.ts), and an Admin moderator
+  // forcibly taking down a published article for a violation. Hiding
+  // both meant an Author who got a real "your article was unpublished
+  // by a moderator" notification (with a link straight to this page)
+  // would find their own article simply missing here, with no way to
+  // see what happened or which article it was. Showing the row with its
+  // existing "unpublished" badge (already styled correctly below) fixes
+  // that without touching the underlying status model.
+  const visibleRows = rows;
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-serif text-2xl font-semibold text-text-heading">My Articles</h1>
-        <Link
-          href="/dashboard/author/articles/new"
-          className="inline-flex h-10 items-center rounded-[4px] bg-ink px-4 text-sm font-semibold text-white transition-colors hover:bg-primary"
-        >
-          New Article
-        </Link>
+        <div className="flex items-center gap-2">
+          <TableRefreshButton />
+          <Link
+            href="/dashboard/author/articles/new"
+            className="inline-flex h-10 items-center rounded-[4px] bg-ink px-4 text-sm font-semibold text-white transition-colors hover:bg-primary"
+          >
+            New Article
+          </Link>
+        </div>
       </div>
 
       {visibleRows.length === 0 ? (
