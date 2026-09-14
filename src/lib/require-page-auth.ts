@@ -17,9 +17,9 @@ import {
 // the permissions.ts functions directly instead of these — redirecting
 // only makes sense for a page render.
 
-function redirectForAuthFailure(err: unknown): never {
+function redirectForAuthFailure(err: unknown, unauthenticatedTarget = "/?authRequired=1"): never {
   if (err instanceof UnauthenticatedError) {
-    redirect("/?authRequired=1");
+    redirect(unauthenticatedTarget);
   }
   if (err instanceof ForbiddenError) {
     redirect("/");
@@ -41,7 +41,14 @@ export async function requireRoleForPage(
   try {
     return await requireRole(role);
   } catch (err) {
-    redirectForAuthFailure(err);
+    // Admin routes send an unauthenticated visitor to the dedicated
+    // /admin-login page rather than the public homepage + AuthModal —
+    // per explicit request, the owner's entry point stays separate
+    // from the normal site login. A logged-in-but-wrong-role visitor
+    // still just goes home (redirectForAuthFailure's ForbiddenError
+    // branch), same as every other role.
+    const isAdminOnly = role === "admin" || (Array.isArray(role) && role.length === 1 && role[0] === "admin");
+    redirectForAuthFailure(err, isAdminOnly ? "/admin-login" : undefined);
   }
 }
 

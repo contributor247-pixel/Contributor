@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { submitOtpAction, resendOtpAction } from "@/lib/actions/otp";
 
-export function VerifyOtpClient() {
+export function VerifyOtpClient({ redirectTo = "/" }: { redirectTo?: string }) {
   const { update } = useSession();
   const router = useRouter();
   const [code, setCode] = useState("");
@@ -29,7 +29,7 @@ export function VerifyOtpClient() {
       return;
     }
     await update({ twoFactorVerified: true });
-    router.push("/");
+    router.push(redirectTo);
     router.refresh();
   };
 
@@ -47,12 +47,13 @@ export function VerifyOtpClient() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#F7F6F4] px-6 text-center">
-      <div className="w-full max-w-sm rounded-[4px] border border-[#E7E5E1] bg-white p-10">
-        <h1 className="mb-2 font-serif text-2xl font-semibold text-[#111114]">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-bg px-6 text-center">
+      <p className="mb-6 font-serif text-xl font-semibold text-text-heading">Contributor</p>
+      <div className="w-full max-w-sm rounded-[4px] border border-border bg-surface p-10 shadow-sm">
+        <h1 className="mb-2 font-serif text-2xl font-semibold text-text-heading">
           Enter your code
         </h1>
-        <p className="mb-6 text-sm text-[#7B7A7F]">
+        <p className="mb-6 text-sm text-text-muted">
           We sent a 6-digit code to your email. It expires in 10 minutes.
         </p>
 
@@ -65,13 +66,13 @@ export function VerifyOtpClient() {
             placeholder="000000"
             value={code}
             onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-            className="mb-4 h-14 w-full rounded-[4px] border border-[#D3D0CA] text-center text-2xl tracking-[0.5em] text-[#111114] placeholder:text-[#D3D0CA] focus:border-[#111114] focus:outline-none focus:ring-[3px] focus:ring-[#11111414]"
+            className="mb-4 h-14 w-full rounded-[4px] border border-border-strong text-center text-2xl tracking-[0.5em] text-text-heading placeholder:text-border-strong focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-[#14141a14]"
           />
-          {error && <p role="alert" className="mb-4 text-sm text-[#D93025]">{error}</p>}
+          {error && <p role="alert" className="mb-4 text-sm text-error">{error}</p>}
           <button
             type="submit"
             disabled={isSubmitting || code.length !== 6}
-            className="h-12 w-full rounded-[4px] bg-[#111114] text-sm font-semibold text-white transition-colors hover:bg-[#C8102E] disabled:cursor-not-allowed disabled:bg-[#C9C9C9] disabled:text-[#8A8A8A]"
+            className="h-12 w-full rounded-[4px] bg-ink text-sm font-semibold text-white transition-colors hover:bg-primary disabled:cursor-not-allowed disabled:bg-border-strong disabled:text-text-muted"
           >
             {isSubmitting ? "Verifying..." : "Verify"}
           </button>
@@ -79,18 +80,18 @@ export function VerifyOtpClient() {
 
         <div className="mt-4">
           {resendState === "sent" ? (
-            <p role="status" className="text-sm text-[#1E8E5A]">A new code is on its way.</p>
+            <p role="status" className="text-sm text-success">A new code is on its way.</p>
           ) : (
             <button
               type="button"
               onClick={handleResend}
               disabled={resendState === "sending"}
-              className="text-sm text-[#111114] underline-offset-2 hover:underline disabled:text-[#B0AFAA]"
+              className="text-sm text-ink underline-offset-2 hover:underline disabled:text-text-muted"
             >
               {resendState === "sending" ? "Sending..." : "Resend code"}
             </button>
           )}
-          {resendError && <p role="alert" className="mt-2 text-sm text-[#D93025]">{resendError}</p>}
+          {resendError && <p role="alert" className="mt-2 text-sm text-error">{resendError}</p>}
         </div>
       </div>
     </div>
