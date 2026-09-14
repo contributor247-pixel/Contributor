@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useId } from "react";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { X, Mail, Lock, User } from "lucide-react";
+import { X, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useAuthModal } from "@/hooks/use-auth-modal";
@@ -41,7 +41,7 @@ export function AuthModal() {
               aria-describedby={undefined}
               render={
                 <motion.div
-                  className="fixed left-1/2 top-1/2 z-50 w-[calc(100vw-2rem)] max-w-[1050px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-md bg-white shadow-2xl outline-none"
+                  className="fixed left-1/2 top-1/2 z-50 w-[calc(100vw-2rem)] max-w-[1050px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[4px] bg-white shadow-2xl outline-none"
                   variants={prefersReducedMotion ? undefined : modalVariants}
                   initial="hidden"
                   animate="visible"
@@ -60,9 +60,9 @@ export function AuthModal() {
                 <X className="h-5 w-5" />
               </DialogPrimitive.Close>
 
-              <div className="flex max-h-[90vh] flex-col overflow-y-auto md:h-[600px] md:flex-row md:overflow-visible">
+              <div className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-y-auto overscroll-contain md:min-h-[600px] md:flex-row">
                 <DarkPanel mode={mode} onSignUpClick={() => setMode("signup")} />
-                <div className="flex flex-1 items-center justify-center px-6 py-10 md:px-12 md:py-0">
+                <div className="flex flex-1 items-center justify-center px-6 py-8 md:px-12 md:py-10">
                   {mode === "login" ? (
                     <LoginForm onSuccess={close} onSwitchToSignup={() => setMode("signup")} />
                   ) : (
@@ -134,15 +134,28 @@ function FieldError({ message }: { message?: string }) {
 
 function IconInput({
   icon: Icon,
+  error,
   ...props
-}: React.InputHTMLAttributes<HTMLInputElement> & { icon: React.ComponentType<{ className?: string }> }) {
+}: React.InputHTMLAttributes<HTMLInputElement> & { icon: React.ComponentType<{ className?: string }>; error?: string }) {
+  const id = useId();
+  const [visible, setVisible] = useState(false);
+  const isPassword = props.type === "password";
   return (
-    <div className="relative">
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={id} className="text-xs font-medium text-text-body">{props.placeholder}</label>
+      <div className="relative">
       <Icon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
       <input
         {...props}
-        className="h-12 w-full rounded-[4px] border border-border-strong pl-11 pr-4 text-text-heading placeholder:text-text-muted transition-colors focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-[#14141a14]"
+        id={id}
+        type={isPassword && visible ? "text" : props.type}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${id}-error` : undefined}
+        className="h-12 w-full rounded-[4px] border border-border-strong bg-surface pl-11 pr-12 text-base text-text-heading placeholder:text-text-muted transition-colors hover:border-text-muted focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-ink/10 aria-invalid:border-error"
       />
+      {isPassword && <button type="button" aria-label={visible ? `Hide ${props.placeholder?.toLowerCase()}` : `Show ${props.placeholder?.toLowerCase()}`} aria-pressed={visible} onClick={() => setVisible(!visible)} className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-[4px] text-text-muted transition-colors hover:text-text-heading">{visible ? <EyeOff className="size-4" aria-hidden="true" /> : <Eye className="size-4" aria-hidden="true" />}</button>}
+      </div>
+      {error && <p id={`${id}-error`} role="alert" className="text-sm text-error">{error}</p>}
     </div>
   );
 }
@@ -237,11 +250,12 @@ function LoginForm({
         <IconInput
           icon={Mail}
           type="email"
+          autoComplete="email"
           placeholder="Email Address"
           value={email}
+          error={errors.email}
           onChange={(e) => setEmail(e.target.value)}
         />
-        <FieldError message={errors.email} />
       </div>
 
       <div className="mb-4">
@@ -249,10 +263,11 @@ function LoginForm({
           icon={Lock}
           type="password"
           placeholder="Password"
+          autoComplete="current-password"
           value={password}
+          error={errors.password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <FieldError message={errors.password} />
       </div>
 
       <label className="mb-6 flex items-center gap-2 text-sm text-text-body">
@@ -383,43 +398,47 @@ function SignupForm({
               icon={User}
               type="text"
               placeholder="Name"
+              autoComplete="name"
               value={name}
+          error={errors.name}
               onChange={(e) => setName(e.target.value)}
             />
-            <FieldError message={errors.name} />
           </div>
 
           <div className="mb-4">
             <IconInput
               icon={Mail}
               type="email"
+          autoComplete="email"
               placeholder="Email Address"
               value={email}
+          error={errors.email}
               onChange={(e) => setEmail(e.target.value)}
             />
-            <FieldError message={errors.email} />
           </div>
 
           <div className="mb-4">
             <IconInput
               icon={Lock}
               type="password"
+              autoComplete="new-password"
               placeholder="Password"
               value={password}
+          error={errors.password}
               onChange={(e) => setPassword(e.target.value)}
             />
-            <FieldError message={errors.password} />
           </div>
 
           <div className="mb-4">
             <IconInput
               icon={Lock}
               type="password"
+              autoComplete="new-password"
               placeholder="Confirm Password"
               value={confirmPassword}
+          error={errors.confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
-            <FieldError message={errors.confirmPassword} />
           </div>
 
           <fieldset className="mb-6">
@@ -437,7 +456,7 @@ function SignupForm({
                   name="role"
                   checked={role === "reader"}
                   onChange={() => setRole("reader")}
-                  className="sr-only"
+                  className="size-4 accent-ink"
                 />
                 Reader
               </label>
@@ -453,7 +472,7 @@ function SignupForm({
                   name="role"
                   checked={role === "author"}
                   onChange={() => setRole("author")}
-                  className="sr-only"
+                  className="size-4 accent-ink"
                 />
                 Author
               </label>

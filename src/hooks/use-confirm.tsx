@@ -59,7 +59,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
           <DialogPrimitive.Backdrop className="fixed inset-0 z-50 bg-[rgba(10,10,12,0.72)]" />
           <DialogPrimitive.Popup
             role="alertdialog"
-            className="fixed left-1/2 top-1/2 z-50 w-[calc(100vw-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-md bg-white p-6 shadow-2xl outline-none"
+            className="fixed left-1/2 top-1/2 z-50 w-[calc(100vw-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-[4px] bg-white p-6 shadow-2xl outline-none"
           >
             {options && (
               <>

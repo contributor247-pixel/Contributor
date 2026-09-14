@@ -71,7 +71,7 @@ export function ReportDialog({ articleId }: { articleId: string }) {
       <DialogPrimitive.Root open={isOpen} onOpenChange={setIsOpen}>
         <DialogPrimitive.Portal>
           <DialogPrimitive.Backdrop className="fixed inset-0 z-50 bg-[rgba(10,10,12,0.72)]" />
-          <DialogPrimitive.Popup className="fixed left-1/2 top-1/2 z-50 w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-md bg-white p-6 shadow-2xl outline-none">
+          <DialogPrimitive.Popup className="fixed left-1/2 top-1/2 z-50 w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-[4px] bg-white p-6 shadow-2xl outline-none">
             <DialogPrimitive.Title className="font-serif text-lg font-semibold text-text-heading">
               Report this article
             </DialogPrimitive.Title>
