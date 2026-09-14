@@ -27,8 +27,9 @@ export function DashboardTopbar({ onMenuClick }: { onMenuClick?: () => void }) {
         >
           <Menu className="h-5 w-5" aria-hidden="true" />
         </button>
-        <Link href="/" className="font-serif text-lg font-semibold text-text-heading">
-          Contributor
+        <Link href="/" className="flex items-center">
+          {/* eslint-disable-next-line @next/next/no-img-element -- static asset in public/, not worth next/image's overhead for a fixed-size topbar logo */}
+          <img src="/logo/logo.png" alt="Contributor" className="h-7 w-auto" />
         </Link>
       </div>
       {session?.user && (
