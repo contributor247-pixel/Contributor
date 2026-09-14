@@ -31,7 +31,7 @@ export function Pagination({ currentPage, totalPages, basePath }: PaginationProp
   const pages = getPageNumbers(currentPage, totalPages);
 
   return (
-    <nav className="mt-12 flex items-center justify-center gap-2" aria-label="Pagination">
+    <nav className="mt-12 flex flex-wrap items-center justify-center gap-y-1 gap-x-2" aria-label="Pagination">
       {pages.map((p, i) =>
         p === "ellipsis" ? (
           <span key={`ellipsis-${i}`} className="px-2 text-sm text-text-muted">
