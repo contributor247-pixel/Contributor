@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { Newspaper } from "lucide-react";
 import { getRecentArticles } from "@/lib/queries/articles";
@@ -8,6 +7,8 @@ import { EditorsPicks } from "@/components/shared/EditorsPicks";
 import { SectionContainer } from "@/components/shared/SectionContainer";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ScrollRevealGrid } from "@/components/shared/ScrollRevealGrid";
+import { AuthorProBand } from "@/components/shared/AuthorProBand";
+import { MoreStoriesComingBand } from "@/components/shared/MoreStoriesComingBand";
 import { buildMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata({
@@ -44,7 +45,7 @@ export default async function Home() {
     <>
       <HomeHero featured={hero} rail={rail} />
 
-      {gridA.length > 0 && (
+      {gridA.length > 0 ? (
         <SectionContainer>
           <ScrollRevealGrid className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {gridA.map((article) => (
@@ -52,22 +53,17 @@ export default async function Home() {
             ))}
           </ScrollRevealGrid>
         </SectionContainer>
+      ) : (
+        // Fewer than 5 articles exist past the hero+rail — nothing to
+        // fill this grid yet. Rather than leave a large gap of plain
+        // white space before the AuthorPro band, show an honest,
+        // on-brand "more is coming" moment instead (see
+        // MoreStoriesComingBand's own comment for the full rationale).
+        <MoreStoriesComingBand />
       )}
 
-      <SectionContainer className="border-y border-border bg-bg-muted">
-        <Link
-          href="/dashboard/author"
-          data-dark-surface
-          className="flex flex-col items-center justify-between gap-4 rounded-[4px] bg-ink px-6 py-8 text-center text-white sm:flex-row sm:text-left"
-        >
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-primary">AuthorPro</p>
-            <h2 className="mt-1 font-serif text-xl font-semibold">Write premium stories and earn from your work</h2>
-          </div>
-          <span className="shrink-0 rounded-[4px] bg-white px-5 py-2.5 text-sm font-semibold text-ink">
-            Learn more
-          </span>
-        </Link>
+      <SectionContainer>
+        <AuthorProBand />
       </SectionContainer>
 
       {editorsFeatured && (

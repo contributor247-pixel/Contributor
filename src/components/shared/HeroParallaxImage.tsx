@@ -65,7 +65,11 @@ export function HeroParallaxImage({ src, alt }: HeroParallaxImageProps) {
       ref={imgRef}
       src={src}
       alt={alt}
-      className="h-[calc(100%+40px)] w-full object-cover opacity-70"
+      // absolute + inset-0 so this sits behind the caller's own
+      // overlay/text content in the same relative-positioned parent
+      // instead of taking up normal document flow space (which pushed
+      // any sibling content below it rather than letting it overlay).
+      className="absolute inset-0 h-[calc(100%+40px)] w-full object-cover opacity-70"
     />
   );
 }
