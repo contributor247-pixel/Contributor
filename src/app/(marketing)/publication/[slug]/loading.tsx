@@ -10,10 +10,10 @@ export default function PublicationLoading() {
     <div>
       <div className="bg-ink">
         <div className="mx-auto flex max-w-[1320px] flex-col items-center px-4 py-16 sm:px-6">
-          <SkeletonBlock className="mb-6 h-24 w-24 rounded-full bg-white/10" />
-          <SkeletonBlock className="h-8 w-64 bg-white/10" />
-          <SkeletonBlock className="mt-3 h-4 w-80 bg-white/10" />
-          <SkeletonBlock className="mt-4 h-3 w-40 bg-white/10" />
+          <SkeletonBlock variant="dark" className="mb-6 h-24 w-24 rounded-full" />
+          <SkeletonBlock variant="dark" className="h-8 w-64" />
+          <SkeletonBlock variant="dark" className="mt-3 h-4 w-80" />
+          <SkeletonBlock variant="dark" className="mt-4 h-3 w-40" />
         </div>
       </div>
 

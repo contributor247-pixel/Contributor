@@ -10,9 +10,9 @@ export default function CategoryLoading() {
     <>
       <section className="bg-primary px-4 py-20 text-center sm:px-6">
         <div className="mx-auto flex max-w-2xl flex-col items-center gap-3">
-          <SkeletonBlock className="h-3 w-40 bg-white/20" />
-          <SkeletonBlock className="h-10 w-64 bg-white/20" />
-          <SkeletonBlock className="h-4 w-80 bg-white/20" />
+          <SkeletonBlock variant="dark" className="h-3 w-40" />
+          <SkeletonBlock variant="dark" className="h-10 w-64" />
+          <SkeletonBlock variant="dark" className="h-4 w-80" />
         </div>
       </section>
       <SectionContainer>
