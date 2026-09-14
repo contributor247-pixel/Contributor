@@ -112,15 +112,8 @@ export function Footer({ latest, featured, suggestions }: FooterProps) {
       <div className="mx-auto max-w-[1320px] px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <span className="flex items-center gap-2 font-serif text-lg font-semibold text-white">
-              <span
-                aria-hidden="true"
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] bg-primary font-serif text-sm font-semibold text-white"
-              >
-                C
-              </span>
-              Contributor
-            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element -- static asset in public/, not worth next/image's overhead for a fixed-size footer logo */}
+            <img src="/logo/logo-dark.png" alt="Contributor" className="h-6 w-auto" />
             <p className="mt-4 text-sm leading-relaxed text-white/60">
               A publishing platform where writers share ideas and readers discover premium,
               editorially-driven content — free to read, or unlocked article by article,

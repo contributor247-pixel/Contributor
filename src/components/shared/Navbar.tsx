@@ -71,17 +71,13 @@ export function Navbar() {
             >
               <Menu className="h-5 w-5" aria-hidden="true" />
             </button>
-            <Link
-              href="/"
-              className="flex items-center gap-2.5 font-serif text-xl font-semibold text-white"
-            >
-              <span
-                aria-hidden="true"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-primary font-serif text-base font-semibold text-white"
-              >
-                C
-              </span>
-              Contributor
+            <Link href="/" className="flex items-center">
+              {/* eslint-disable-next-line @next/next/no-img-element -- static asset in public/, not worth next/image's overhead for a fixed-size nav logo */}
+              <img
+                src="/logo/logo-dark.png"
+                alt="Contributor"
+                className="h-6 w-auto sm:h-7"
+              />
             </Link>
           </div>
 
@@ -177,15 +173,8 @@ export function Navbar() {
               }}
             >
               <div className="mb-8 flex items-center justify-between">
-                <span className="flex items-center gap-2 font-serif text-lg font-semibold text-white">
-                  <span
-                    aria-hidden="true"
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] bg-primary font-serif text-sm font-semibold text-white"
-                  >
-                    C
-                  </span>
-                  Contributor
-                </span>
+                {/* eslint-disable-next-line @next/next/no-img-element -- static asset in public/, not worth next/image's overhead for a fixed-size nav logo */}
+                <img src="/logo/logo-dark.png" alt="Contributor" className="h-6 w-auto" />
                 <button
                   type="button"
                   aria-label="Close menu"
