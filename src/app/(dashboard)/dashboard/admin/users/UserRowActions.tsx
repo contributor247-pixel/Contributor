@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { verifyUserEmailAction, setUserStatusAction } from "@/lib/actions/admin";
+import { useConfirm } from "@/hooks/use-confirm";
 
 interface UserRowActionsProps {
   userId: string;
@@ -15,6 +16,7 @@ export function UserRowActions({ userId, role, status, emailVerified }: UserRowA
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const confirm = useConfirm();
 
   const handleVerify = () => {
     setError(null);
@@ -28,10 +30,15 @@ export function UserRowActions({ userId, role, status, emailVerified }: UserRowA
     });
   };
 
-  const handleToggleStatus = () => {
+  const handleToggleStatus = async () => {
     const nextStatus = status === "active" ? "suspended" : "active";
-    if (nextStatus === "suspended" && !window.confirm("Suspend this user? Their published articles will be hidden immediately.")) {
-      return;
+    if (nextStatus === "suspended") {
+      const confirmed = await confirm({
+        title: "Suspend this user?",
+        message: "Their published articles will be hidden immediately.",
+        confirmLabel: "Suspend",
+      });
+      if (!confirmed) return;
     }
     setError(null);
     startTransition(async () => {

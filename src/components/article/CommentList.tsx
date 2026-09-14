@@ -5,6 +5,8 @@ import { useSession } from "next-auth/react";
 import { Avatar } from "@/components/shared/Avatar";
 import { timeAgo } from "@/lib/time-ago";
 import { deleteCommentAction, type CommentWithAuthor } from "@/lib/actions/comment";
+import { useConfirm } from "@/hooks/use-confirm";
+import { useToast } from "@/hooks/use-toast";
 
 interface CommentListProps {
   comments: CommentWithAuthor[];
@@ -15,14 +17,25 @@ export function CommentList({ comments, onDeleted }: CommentListProps) {
   const { data: session } = useSession();
   const [isPending, startTransition] = useTransition();
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const confirm = useConfirm();
+  const { showError } = useToast();
 
-  const handleDelete = (commentId: string) => {
-    if (!window.confirm("Delete this comment? This can't be undone.")) return;
+  const handleDelete = async (commentId: string) => {
+    const confirmed = await confirm({
+      title: "Delete this comment?",
+      message: "This can't be undone.",
+      confirmLabel: "Delete",
+    });
+    if (!confirmed) return;
     setPendingId(commentId);
     startTransition(async () => {
       const result = await deleteCommentAction(commentId);
       if (result.success) {
         onDeleted(commentId);
+      } else {
+        // Previously silent on failure — the button just stopped
+        // "Deleting..." with no indication anything went wrong.
+        showError(result.error);
       }
       setPendingId(null);
     });

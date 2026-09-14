@@ -3,14 +3,22 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { cancelSubscriptionAction } from "@/lib/actions/subscription";
+import { useConfirm } from "@/hooks/use-confirm";
 
 export function CancelSubscriptionButton({ subscriptionId }: { subscriptionId: string }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const confirm = useConfirm();
 
-  const handleCancel = () => {
-    if (!window.confirm("Cancel this subscription? You'll lose access at the end of the current billing period.")) return;
+  const handleCancel = async () => {
+    const confirmed = await confirm({
+      title: "Cancel this subscription?",
+      message: "You'll lose access at the end of the current billing period.",
+      confirmLabel: "Cancel subscription",
+      cancelLabel: "Keep subscription",
+    });
+    if (!confirmed) return;
     setError(null);
     startTransition(async () => {
       const result = await cancelSubscriptionAction(subscriptionId);

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useAuthModal } from "@/hooks/use-auth-modal";
+import { useConfirm } from "@/hooks/use-confirm";
 
 interface SubscribeButtonProps {
   type: "publication" | "platform";
@@ -16,6 +17,7 @@ interface SubscribeButtonProps {
 export function SubscribeButton({ type, interval, publicationId, label, className, confirmMessage }: SubscribeButtonProps) {
   const { data: session } = useSession();
   const { open } = useAuthModal();
+  const confirm = useConfirm();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,7 +26,9 @@ export function SubscribeButton({ type, interval, publicationId, label, classNam
       open("login");
       return;
     }
-    if (confirmMessage && !window.confirm(confirmMessage)) return;
+    // Not destructive — this is a plan-change heads-up (e.g. switching
+    // from a Publication sub to the Platform sub), not a delete/cancel.
+    if (confirmMessage && !(await confirm({ message: confirmMessage, confirmLabel: "Continue", destructive: false }))) return;
 
     setError(null);
     setIsSubmitting(true);

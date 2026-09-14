@@ -8,6 +8,7 @@ import {
   suspendAuthorForReportAction,
 } from "@/lib/actions/admin";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirm } from "@/hooks/use-confirm";
 
 interface ReportActionsProps {
   reportId: string;
@@ -20,6 +21,7 @@ export function ReportActions({ reportId, articleId, authorUserId }: ReportActio
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const { show } = useToast();
+  const confirm = useConfirm();
 
   const run = (
     successMessage: string,
@@ -51,8 +53,13 @@ export function ReportActions({ reportId, articleId, authorUserId }: ReportActio
         </button>
         <button
           type="button"
-          onClick={() => {
-            if (!window.confirm("Unpublish this article? It will be hidden from public view immediately.")) return;
+          onClick={async () => {
+            const confirmed = await confirm({
+              title: "Unpublish this article?",
+              message: "It will be hidden from public view immediately.",
+              confirmLabel: "Unpublish",
+            });
+            if (!confirmed) return;
             run("Article unpublished.", () => unpublishArticleAction(reportId, articleId));
           }}
           disabled={isPending}
@@ -63,8 +70,13 @@ export function ReportActions({ reportId, articleId, authorUserId }: ReportActio
         {authorUserId && (
           <button
             type="button"
-            onClick={() => {
-              if (!window.confirm("Suspend this author? All of their published articles will be hidden immediately.")) return;
+            onClick={async () => {
+              const confirmed = await confirm({
+                title: "Suspend this author?",
+                message: "All of their published articles will be hidden immediately.",
+                confirmLabel: "Suspend author",
+              });
+              if (!confirmed) return;
               run("Author suspended.", () => suspendAuthorForReportAction(reportId, authorUserId));
             }}
             disabled={isPending}
