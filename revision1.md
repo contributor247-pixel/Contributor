@@ -248,7 +248,7 @@ No AI image-generation tool was available in this environment, so rather than ha
 
 ---
 
-## Step 10 — Final full regression pass ✅ DONE (pending user sign-off)
+## Step 10 — Final full regression pass ✅ DONE — SIGNED OFF
 
 - [x] **Production build:** `npm run build` completed with **zero errors** — Turbopack build, real TypeScript check (not just `tsc --noEmit`), all 38 routes present and correctly categorized (static vs. dynamic), including every new `loading.tsx`, `icon.png`/`apple-icon.png`, and all Step 4-9 code changes. This is the strongest possible regression signal: a real production build compiles and type-checks the entire app at once.
 - [x] **Re-ran key flows after all Step 8/9 changes**, via real Playwright browser sessions against the live dev server:
