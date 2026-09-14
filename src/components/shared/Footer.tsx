@@ -113,7 +113,7 @@ export function Footer({ latest, featured, suggestions }: FooterProps) {
         <div className="grid grid-cols-1 gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             {/* eslint-disable-next-line @next/next/no-img-element -- static asset in public/, not worth next/image's overhead for a fixed-size footer logo */}
-            <img src="/logo/logo-dark.png" alt="Contributor" className="h-12 w-auto" />
+            <img src="/logo/logo-dark.png" alt="Contributor" className="h-14 w-auto" />
             <p className="mt-4 text-sm leading-relaxed text-white/60">
               A publishing platform where writers share ideas and readers discover premium,
               editorially-driven content — free to read, or unlocked article by article,

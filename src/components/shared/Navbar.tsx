@@ -61,7 +61,7 @@ export function Navbar() {
           isScrolled ? "shadow-[0_2px_16px_rgba(0,0,0,0.25)] backdrop-blur-sm" : "",
         ].join(" ")}
       >
-        <div className="mx-auto flex h-16 max-w-[1320px] items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-20 max-w-[1320px] items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -76,7 +76,7 @@ export function Navbar() {
               <img
                 src="/logo/logo-dark.png"
                 alt="Contributor"
-                className="h-10 w-auto sm:h-12"
+                className="h-12 w-auto sm:h-14"
               />
             </Link>
           </div>
@@ -174,7 +174,7 @@ export function Navbar() {
             >
               <div className="mb-8 flex items-center justify-between">
                 {/* eslint-disable-next-line @next/next/no-img-element -- static asset in public/, not worth next/image's overhead for a fixed-size nav logo */}
-                <img src="/logo/logo-dark.png" alt="Contributor" className="h-10 w-auto" />
+                <img src="/logo/logo-dark.png" alt="Contributor" className="h-11 w-auto" />
                 <button
                   type="button"
                   aria-label="Close menu"
