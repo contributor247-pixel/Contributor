@@ -27,7 +27,22 @@ export function HomeHero({ featured, rail }: HomeHeroProps) {
         </div>
       </Link>
       {rail.length > 0 && (
-        <div className="mx-auto grid max-w-[1320px] grid-cols-2 gap-px bg-white/10 sm:grid-cols-4">
+        // Column count matches the real item count (capped at the
+        // original 2/4 split) instead of always reserving 4 columns —
+        // with fewer than 4 rail items (e.g. early on, before enough
+        // articles exist), a fixed 4-col grid left dead, empty dark
+        // space where the missing items would have sat.
+        <div
+          className={`mx-auto grid max-w-[1320px] gap-px bg-white/10 ${
+            rail.length === 1
+              ? "grid-cols-1"
+              : rail.length === 2
+                ? "grid-cols-2"
+                : rail.length === 3
+                  ? "grid-cols-2 sm:grid-cols-3"
+                  : "grid-cols-2 sm:grid-cols-4"
+          }`}
+        >
           {rail.map((item) => (
             <Link
               key={item.slug}
