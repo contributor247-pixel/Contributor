@@ -76,7 +76,7 @@ export function Navbar() {
               <img
                 src="/logo/logo-dark.png"
                 alt="Contributor"
-                className="h-6 w-auto sm:h-7"
+                className="h-8 w-auto sm:h-10"
               />
             </Link>
           </div>
@@ -174,7 +174,7 @@ export function Navbar() {
             >
               <div className="mb-8 flex items-center justify-between">
                 {/* eslint-disable-next-line @next/next/no-img-element -- static asset in public/, not worth next/image's overhead for a fixed-size nav logo */}
-                <img src="/logo/logo-dark.png" alt="Contributor" className="h-6 w-auto" />
+                <img src="/logo/logo-dark.png" alt="Contributor" className="h-8 w-auto" />
                 <button
                   type="button"
                   aria-label="Close menu"
