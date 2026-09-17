@@ -1,7 +1,7 @@
 import { randomBytes } from "crypto";
 import { render } from "@react-email/components";
 import { db } from "@/lib/db";
-import { resend } from "@/lib/resend";
+import { mailer } from "@/lib/mailer";
 import { verificationTokens } from "../../drizzle/schema/index";
 import { VerifyEmail } from "@/emails/verify-email";
 import type { users } from "../../drizzle/schema/users";
@@ -25,19 +25,20 @@ export async function sendVerificationEmail(user: User): Promise<void> {
 
   const html = await render(VerifyEmail({ name: user.name ?? "", verifyUrl }));
 
-  const { error } = await resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL ?? "Contributor <onboarding@resend.dev>",
+  const { error } = await mailer.emails.send({
+    from: process.env.EMAIL_FROM ?? "Contributor <onboarding@contributor.app>",
     to: user.email,
     subject: "Verify your email to finish setting up your Contributor account",
     html,
   });
 
-  // The Resend SDK resolves (never rejects) on an API-level failure — it
-  // returns { error } instead of throwing. Without this check, a bad API
-  // key or a suspended domain would silently "succeed": the token is
-  // already written above, the caller (signupAction) reports success, and
-  // the user is told to check an email that was never sent, with no way
-  // to tell what went wrong.
+  // mailer.emails.send() resolves (never rejects) on a send failure — it
+  // returns { error } instead of throwing, matching the earlier Resend
+  // SDK's shape. Without this check, a bad SMTP login or a Gmail send
+  // rejection would silently "succeed": the token is already written
+  // above, the caller (signupAction) reports success, and the user is
+  // told to check an email that was never sent, with no way to tell what
+  // went wrong.
   if (error) {
     throw new Error(`Failed to send verification email: ${error.message}`);
   }

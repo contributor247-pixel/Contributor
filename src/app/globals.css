@@ -23,6 +23,11 @@
      Contributor palette instead of running two parallel systems. */
   --color-primary-hover: var(--color-primary-hover);
   --color-primary-subtle: var(--color-primary-subtle);
+  --color-supportive: var(--color-supportive);
+  --color-supportive-hover: var(--color-supportive-hover);
+  --color-supportive-subtle: var(--color-supportive-subtle);
+  --color-supportive-glow: var(--color-supportive-glow);
+  --color-oxblood-glow: var(--color-oxblood-glow);
   --color-ink: var(--color-ink);
   --color-ink-soft: var(--color-ink-soft);
   --color-bg: var(--color-bg);
@@ -236,4 +241,30 @@
   );
   background-size: 200% 100%;
   animation: shimmer-sweep 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 0.65;
+  }
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Glassmorphic border sheen */
+.glass-border-subtle {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.glass-border-dark {
+  border: 1px solid rgba(20, 20, 26, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }

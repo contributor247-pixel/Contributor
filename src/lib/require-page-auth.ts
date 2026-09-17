@@ -6,6 +6,7 @@ import {
   requireVerifiedAuthor,
   UnauthenticatedError,
   ForbiddenError,
+  SuspendedError,
 } from "@/lib/permissions";
 
 // Thin page-component wrappers around the permissions.ts checks: an
@@ -20,6 +21,20 @@ import {
 function redirectForAuthFailure(err: unknown, unauthenticatedTarget = "/?authRequired=1"): never {
   if (err instanceof UnauthenticatedError) {
     redirect(unauthenticatedTarget);
+  }
+  if (err instanceof SuspendedError) {
+    // Deliberately does NOT call signOut() here — NextAuth's
+    // server-side signOut() mutates cookies, which Next.js only
+    // allows from a Server Action or Route Handler, not mid-render in
+    // a Server Component (this function runs inside a page's render).
+    // Calling it here 500'd the entire page instead of redirecting.
+    // The stale JWT staying "valid" client-side is harmless: every
+    // requireAuth() call re-checks the live DB status (see
+    // permissions.ts), so the account still can't do anything even
+    // though the client thinks it's signed in — it'll be fully signed
+    // out the next time it hits a real sign-out control or the
+    // session naturally expires.
+    redirect("/?suspended=1");
   }
   if (err instanceof ForbiddenError) {
     redirect("/");

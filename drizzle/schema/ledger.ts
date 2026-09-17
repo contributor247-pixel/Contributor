@@ -7,6 +7,7 @@ import {
   pgEnum,
 } from "drizzle-orm/pg-core";
 import { articles } from "./articles";
+import { users } from "./users";
 
 export const ledgerSourceTypeEnum = pgEnum("ledger_source_type", [
   "purchase",
@@ -27,6 +28,13 @@ export const ledger = pgTable("ledger", {
   sourceType: ledgerSourceTypeEnum("source_type").notNull(),
   // The purchases.id or subscriptions.id this entry originated from.
   sourceId: uuid("source_id").notNull(),
+  // The Reader who paid — docs/00_ScopeDocument.md Section 5.3 lists
+  // "payer (reader) id" as a required ledger field in its own right,
+  // not just derivable by joining through sourceId. Stored directly so
+  // the ledger stays a self-contained system of record even if the
+  // originating purchase/subscription row is later deleted or the join
+  // path changes.
+  payerId: uuid("payer_id").notNull().references(() => users.id),
   grossAmountCents: integer("gross_amount_cents").notNull(),
   platformCents: integer("platform_cents").notNull(),
   authorCents: integer("author_cents").notNull().default(0),

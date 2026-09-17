@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "purchases_stripe_payment_intent_id_unique" ON "purchases" USING btree ("stripe_payment_intent_id");

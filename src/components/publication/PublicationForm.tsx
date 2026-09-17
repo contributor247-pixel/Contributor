@@ -38,6 +38,14 @@ export function PublicationForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
+    // coverImageError only ever blocked coverImageUrl from being set
+    // (see handleCoverImageChange above) — it never actually stopped
+    // submission, so choosing an oversized cover image and clicking
+    // Create Publication anyway silently published with no cover
+    // instead of surfacing the problem again.
+    if (coverImageError) {
+      return;
+    }
     const payload = { name, description: description || null, coverImageUrl };
     const parsed = publicationSchema.safeParse(payload);
     if (!parsed.success) {
@@ -51,14 +59,24 @@ export function PublicationForm() {
     }
     setErrors({});
     setIsSubmitting(true);
-    const result = await createPublicationAction(parsed.data);
-    setIsSubmitting(false);
-    if (!result.success) {
-      setFormError(result.error);
-      return;
+    // See the matching comment in ArticleForm.tsx's handleSubmit — a
+    // Server Action call can throw before ever returning { success,
+    // error } (e.g. Next's request body size limit, since the cover
+    // image is base64-encoded directly into this request), which would
+    // otherwise leave isSubmitting stuck and give no feedback at all.
+    try {
+      const result = await createPublicationAction(parsed.data);
+      if (!result.success) {
+        setFormError(result.error);
+        return;
+      }
+      router.push(`/dashboard/author/publications/${result.publicationId}`);
+      router.refresh();
+    } catch {
+      setFormError("Something went wrong while saving. If your cover image is large, try a smaller file and try again.");
+    } finally {
+      setIsSubmitting(false);
     }
-    router.push(`/dashboard/author/publications/${result.publicationId}`);
-    router.refresh();
   };
 
   return (

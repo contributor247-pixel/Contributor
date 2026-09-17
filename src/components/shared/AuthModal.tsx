@@ -5,7 +5,7 @@ import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { X, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 import { signIn, getSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 import { useShake } from "@/hooks/use-shake";
 import { signupAction } from "@/lib/actions/auth";
@@ -55,7 +55,7 @@ export function AuthModal() {
               </DialogPrimitive.Title>
               <DialogPrimitive.Close
                 aria-label="Close"
-                className="absolute right-4 top-4 z-10 flex h-11 w-11 items-center justify-center rounded-full text-white transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-white md:h-9 md:w-9 md:text-ink md:hover:bg-black/5"
+                className="absolute right-4 top-4 z-10 flex h-11 w-11 items-center justify-center rounded-full text-white transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-white md:text-ink md:hover:bg-black/5 lg:h-9 lg:w-9"
               >
                 <X className="h-5 w-5" />
               </DialogPrimitive.Close>
@@ -168,6 +168,8 @@ function LoginForm({
   onSwitchToSignup: () => void;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -232,7 +234,14 @@ function LoginForm({
     // Calling router.push after that unmount was intermittently dropping
     // the navigation.
     if (session?.user && !session.user.twoFactorVerified) {
-      router.push("/verify-otp");
+      // Without ?next=, completing OTP always landed back on the
+      // homepage regardless of what page the user opened this modal
+      // from — losing their place if they, say, clicked "Publish on
+      // Contributor" from an article page and had to verify OTP first.
+      const query = searchParams.toString();
+      const currentPath = query ? `${pathname}?${query}` : pathname;
+      const target = currentPath && currentPath !== "/" ? `?next=${encodeURIComponent(currentPath)}` : "";
+      router.push(`/verify-otp${target}`);
     }
     onSuccess();
   };
@@ -311,7 +320,7 @@ function LoginForm({
         <button
           type="button"
           onClick={onSwitchToSignup}
-          className="text-text-muted transition-colors hover:text-ink"
+          className="flex min-h-11 items-center text-text-muted transition-colors hover:text-ink"
         >
           Don&apos;t have an account? <span className="font-semibold text-ink underline-offset-2 hover:underline">Create one</span>
         </button>
@@ -447,8 +456,8 @@ function SignupForm({
               <label
                 className={
                   role === "reader"
-                    ? "flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-[4px] border border-ink bg-ink/5 px-4 py-2.5 font-medium text-ink transition-colors"
-                    : "flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-[4px] border border-border-strong px-4 py-2.5 text-text-body transition-colors hover:border-text-muted"
+                    ? "flex flex-1 min-h-11 cursor-pointer items-center justify-center gap-2 rounded-[4px] border border-ink bg-ink/5 px-4 py-3 font-medium text-ink transition-colors"
+                    : "flex flex-1 min-h-11 cursor-pointer items-center justify-center gap-2 rounded-[4px] border border-border-strong px-4 py-3 text-text-body transition-colors hover:border-text-muted"
                 }
               >
                 <input
@@ -463,8 +472,8 @@ function SignupForm({
               <label
                 className={
                   role === "author"
-                    ? "flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-[4px] border border-ink bg-ink/5 px-4 py-2.5 font-medium text-ink transition-colors"
-                    : "flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-[4px] border border-border-strong px-4 py-2.5 text-text-body transition-colors hover:border-text-muted"
+                    ? "flex flex-1 min-h-11 cursor-pointer items-center justify-center gap-2 rounded-[4px] border border-ink bg-ink/5 px-4 py-3 font-medium text-ink transition-colors"
+                    : "flex flex-1 min-h-11 cursor-pointer items-center justify-center gap-2 rounded-[4px] border border-border-strong px-4 py-3 text-text-body transition-colors hover:border-text-muted"
                 }
               >
                 <input
@@ -489,11 +498,11 @@ function SignupForm({
             {isSubmitting ? "Creating account..." : "Create Account"}
           </button>
 
-          <div className="mt-4 text-center text-sm">
+          <div className="mt-4 flex justify-center text-sm">
             <button
               type="button"
               onClick={onSwitchToLogin}
-              className="text-text-muted transition-colors hover:text-ink"
+              className="flex min-h-11 items-center text-text-muted transition-colors hover:text-ink"
             >
               Already have an account? Sign in
             </button>

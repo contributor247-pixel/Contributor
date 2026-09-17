@@ -2,7 +2,7 @@ import type { Session } from "next-auth";
 import { and, eq, gt } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { subscriptions, purchases } from "../../drizzle/schema/index";
+import { subscriptions, purchases, users } from "../../drizzle/schema/index";
 
 export class UnauthenticatedError extends Error {
   constructor() {
@@ -18,16 +18,39 @@ export class ForbiddenError extends Error {
   }
 }
 
+export class SuspendedError extends Error {
+  constructor() {
+    super("Account suspended");
+    this.name = "SuspendedError";
+  }
+}
+
 /**
  * Requires any authenticated session. Throws UnauthenticatedError if
  * there is none — callers (pages, Server Actions, Route Handlers) are
  * responsible for turning that into the right response for their
  * context (redirect for a page, 401 JSON for an API route).
+ *
+ * Also re-checks the account's live status in the database on every
+ * call, not just session.user.status from the JWT. That field is
+ * captured once at login and never refreshed, so without this check
+ * an Admin suspending a user only blocked their *next* login — an
+ * already-issued session (valid for SESSION_MAX_AGE) could keep
+ * posting comments, filing reports, etc. for the rest of its
+ * lifetime, which defeats the point of "suspend this user now."
  */
 export async function requireAuth(): Promise<Session> {
   const session = await auth();
   if (!session?.user) {
     throw new UnauthenticatedError();
+  }
+  const [current] = await db
+    .select({ status: users.status })
+    .from(users)
+    .where(eq(users.id, session.user.id))
+    .limit(1);
+  if (!current || current.status === "suspended") {
+    throw new SuspendedError();
   }
   return session;
 }
@@ -94,12 +117,20 @@ export async function requireAuthorPro(): Promise<Session> {
 }
 
 /**
- * Requires role author/admin, a verified email, and completed OTP 2FA
- * for the current session — the full "fully-verified Author" bar per
+ * Requires role author, a verified email, and completed OTP 2FA for
+ * the current session — the full "fully-verified Author" bar per
  * docs/01_ApplicationFlow.md Flow C, used to gate /dashboard/author.
+ *
+ * Role is "author" only, not ["author", "admin"] — docs/00_ScopeDocument.md
+ * Section 3's matrix explicitly marks Admin ❌ for every author-facing
+ * capability this guards (write/edit/publish, apply a Category, create
+ * Tags, co-author, accept/decline a Publication invite). Admin has its
+ * own separate login (/admin-login) and dashboard area per
+ * require-page-auth.ts — there's no product reason for an Admin
+ * session to also pass as an Author here.
  */
 export async function requireVerifiedAuthor(): Promise<Session> {
-  const session = await requireRole(["author", "admin"]);
+  const session = await requireRole("author");
   if (!session.user.emailVerified) {
     throw new ForbiddenError("Email not verified");
   }

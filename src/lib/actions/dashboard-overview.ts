@@ -53,21 +53,34 @@ export async function getAuthorOverviewStats() {
   };
 }
 
-export async function getReaderOverviewStats() {
-  const session = await requireAuth();
+export async function getReaderOverviewStats(userId?: string) {
+  let effectiveUserId = userId;
+  if (!effectiveUserId) {
+    try {
+      const session = await requireAuth();
+      effectiveUserId = session.user.id;
+    } catch {
+      return { totalPurchases: 0, activeSubscriptions: 0 };
+    }
+  }
 
-  const [[purchaseCount], [activeSubCount]] = await Promise.all([
-    db.select({ value: count() }).from(purchases).where(eq(purchases.userId, session.user.id)),
-    db
-      .select({ value: count() })
-      .from(subscriptions)
-      .where(and(eq(subscriptions.userId, session.user.id), eq(subscriptions.status, "active"))),
-  ]);
+  try {
+    const [[purchaseCount], [activeSubCount]] = await Promise.all([
+      db.select({ value: count() }).from(purchases).where(eq(purchases.userId, effectiveUserId)),
+      db
+        .select({ value: count() })
+        .from(subscriptions)
+        .where(and(eq(subscriptions.userId, effectiveUserId), eq(subscriptions.status, "active"))),
+    ]);
 
-  return {
-    totalPurchases: purchaseCount.value,
-    activeSubscriptions: activeSubCount.value,
-  };
+    return {
+      totalPurchases: Number(purchaseCount?.value ?? 0),
+      activeSubscriptions: Number(activeSubCount?.value ?? 0),
+    };
+  } catch (err) {
+    console.error("Failed to load reader overview stats:", err);
+    return { totalPurchases: 0, activeSubscriptions: 0 };
+  }
 }
 
 export async function getMyPurchasesAction() {

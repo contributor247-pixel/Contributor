@@ -15,7 +15,13 @@ export default async function VerifyEmailPage({
   const result = await verifyEmailAction(token);
 
   if (result.success) {
-    return <VerifyEmailClient status="success" email={email} />;
+    return (
+      <VerifyEmailClient
+        status="success"
+        email={result.email}
+        autoLoginToken={result.autoLoginToken}
+      />
+    );
   }
 
   return <VerifyEmailClient status={result.error} email={email} />;

@@ -22,6 +22,34 @@
       "when": 1788718488868,
       "tag": "0002_youthful_storm",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789278552633,
+      "tag": "0003_complete_young_avengers",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789585365907,
+      "tag": "0004_easy_senator_kelly",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789585872366,
+      "tag": "0005_sad_white_tiger",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789601389464,
+      "tag": "0006_aberrant_arachne",
+      "breakpoints": true
     }
   ]
 }

@@ -69,18 +69,33 @@ export function NotificationBell() {
     if (!item.isRead) {
       setItems((prev) => prev.map((n) => (n.id === item.id ? { ...n, isRead: true } : n)));
       setUnreadCount((prev) => Math.max(0, prev - 1));
-      startTransition(() => {
-        markNotificationReadAction(item.id);
+      startTransition(async () => {
+        try {
+          await markNotificationReadAction(item.id);
+        } catch {
+          // Revert the optimistic update — without this the bell can
+          // silently drift out of sync with the DB (shows read, isn't)
+          // with no way for the user to tell.
+          setItems((prev) => prev.map((n) => (n.id === item.id ? { ...n, isRead: false } : n)));
+          setUnreadCount((prev) => prev + 1);
+        }
       });
     }
     setIsOpen(false);
   };
 
   const handleMarkAllRead = () => {
+    const previousItems = items;
+    const previousUnreadCount = unreadCount;
     setItems((prev) => prev.map((n) => ({ ...n, isRead: true })));
     setUnreadCount(0);
-    startTransition(() => {
-      markAllNotificationsReadAction();
+    startTransition(async () => {
+      try {
+        await markAllNotificationsReadAction();
+      } catch {
+        setItems(previousItems);
+        setUnreadCount(previousUnreadCount);
+      }
     });
   };
 

@@ -62,9 +62,14 @@ export function EditorCanvas({ title, onTitleChange, content, onContentChange, o
       showError(`That image is too large — inline images must be under ${MAX_INLINE_IMAGE_BYTES / 1024 / 1024}MB.`);
       return;
     }
+    // setImage's src-only call left every inline image with no alt
+    // text at all — invisible to screen readers reading a published
+    // article. Falling back to the filename (stripped of extension)
+    // is a plain-text default, not a UI change.
+    const altFallback = file.name.replace(/\.[^./\\]+$/, "").trim() || "Inline image";
     const reader = new FileReader();
     reader.onload = () => {
-      editor.chain().focus().setImage({ src: reader.result as string }).run();
+      editor.chain().focus().setImage({ src: reader.result as string, alt: altFallback }).run();
     };
     reader.onerror = () => showError("Couldn't read that image. Please try again.");
     reader.readAsDataURL(file);
@@ -82,7 +87,7 @@ export function EditorCanvas({ title, onTitleChange, content, onContentChange, o
           el.style.height = "auto";
           el.style.height = `${el.scrollHeight}px`;
         }}
-        className="mb-4 w-full resize-none overflow-hidden border-none bg-transparent font-serif text-4xl font-semibold leading-[1.2] text-text-heading placeholder:text-text-muted/60 focus:outline-none"
+        className="mb-4 w-full resize-none overflow-hidden border-none bg-transparent font-serif text-4xl font-semibold leading-[1.2] text-text-heading placeholder:text-text-muted focus:outline-none"
       />
       {editor && <FloatingToolbar editor={editor} />}
       <EditorContent editor={editor} />

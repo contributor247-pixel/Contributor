@@ -47,6 +47,20 @@ export async function getActivePublicationSubscriptionName(userId: string): Prom
   return row?.name ?? null;
 }
 
+// Powers the reverse-direction warning on the Publication-subscribe
+// button (docs/00_ScopeDocument.md Section 6's supersede rule: the
+// UI should warn, but must not block, subscribing to a Publication
+// while already on a Platform subscription — that combination is
+// allowed but redundant since Platform access already includes it).
+export async function hasActivePlatformSubscription(userId: string): Promise<boolean> {
+  const [row] = await db
+    .select({ id: subscriptions.id })
+    .from(subscriptions)
+    .where(and(eq(subscriptions.userId, userId), eq(subscriptions.type, "platform"), eq(subscriptions.status, "active")))
+    .limit(1);
+  return !!row;
+}
+
 export type CancelSubscriptionResult = { success: true } | { success: false; error: string };
 
 export async function cancelSubscriptionAction(subscriptionId: string): Promise<CancelSubscriptionResult> {

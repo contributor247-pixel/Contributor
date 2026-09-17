@@ -19,13 +19,17 @@ export function CommentForm({ articleId, onPosted }: CommentFormProps) {
 
   if (!session?.user) {
     return (
-      <button
-        type="button"
-        onClick={() => open("login")}
-        className="rounded-[4px] border border-border-strong px-4 py-2 text-sm font-medium text-text-body transition-colors hover:bg-bg-muted"
-      >
-        Log in to leave a comment
-      </button>
+      <div className="rounded-2xl border border-border/80 bg-surface p-6 text-center shadow-xs">
+        <p className="text-sm font-medium text-text-heading">Join the conversation</p>
+        <p className="mt-1 text-xs text-text-muted">Sign in to share your perspective with the author and community.</p>
+        <button
+          type="button"
+          onClick={() => open("login")}
+          className="mt-4 inline-flex min-h-11 items-center justify-center rounded-full border border-primary/40 bg-primary px-5 py-2 text-xs font-semibold text-white shadow-xs transition-all hover:bg-primary-hover hover:border-primary"
+        >
+          Sign in to leave a comment
+        </button>
+      </div>
     );
   }
 
@@ -51,22 +55,25 @@ export function CommentForm({ articleId, onPosted }: CommentFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-3 rounded-2xl border border-border/80 bg-surface p-4 sm:p-5 shadow-xs">
       <textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        placeholder="Leave a comment..."
+        placeholder="Share your thoughts on this dispatch..."
         rows={3}
-        className="w-full rounded-[4px] border border-border-strong px-4 py-3 text-sm text-text-body placeholder:text-text-muted focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-[#11111414]"
+        className="w-full rounded-xl border border-border/80 bg-bg p-3.5 text-sm text-text-body placeholder:text-text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all resize-y min-h-[90px]"
       />
-      {error && <p role="alert" className="text-sm text-error">{error}</p>}
-      <button
-        type="submit"
-        disabled={isPending || !body.trim()}
-        className="self-start rounded-[4px] bg-ink px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary disabled:cursor-not-allowed disabled:bg-[#C9C9C9] disabled:text-[#8A8A8A]"
-      >
-        {isPending ? "Posting..." : "Post Comment"}
-      </button>
+      {error && <p role="alert" className="text-xs text-error">{error}</p>}
+      <div className="flex items-center justify-between pt-1">
+        <span className="text-[11px] text-text-muted">Markdown supported</span>
+        <button
+          type="submit"
+          disabled={isPending || !body.trim()}
+          className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 py-2 text-xs font-semibold text-white shadow-xs transition-all hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {isPending ? "Publishing..." : "Post Comment"}
+        </button>
+      </div>
     </form>
   );
 }

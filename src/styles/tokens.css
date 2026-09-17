@@ -37,10 +37,24 @@
   --color-link: #14141a;
   --color-link-hover: #8b1e3f;
 
-  /* Semantic */
-  --color-success: #1e8e5a;
-  --color-warning: #b8860b;
-  --color-error: #d93025;
+  /* Semantic — darkened from the theme doc's starting values (kept
+     the same hue/saturation) to clear WCAG AA's 4.5:1 for normal text:
+     the originals measured 4.14:1 (success), 3.25:1 (warning), and
+     4.46:1 (error, against --color-bg-muted specifically) — all real
+     failures on the light surfaces these are used as text color on
+     throughout the app (status badges, form/toast messages), not just
+     borders/icons. Verified via WCAG relative-luminance contrast
+     calculation against both --color-bg and --color-bg-muted. */
+  --color-success: #1b8152;
+  --color-warning: #926a09;
+  --color-error: #d73025;
+
+  /* Supportive contrast accent (warm champagne gold / amber ochre) */
+  --color-supportive: #d97706;
+  --color-supportive-hover: #b45309;
+  --color-supportive-subtle: #fef3c7;
+  --color-supportive-glow: rgba(217, 119, 6, 0.28);
+  --color-oxblood-glow: rgba(139, 30, 63, 0.28);
 
   /* Overlay */
   --color-overlay-scrim: rgba(10, 10, 12, 0.72);
@@ -51,6 +65,7 @@
   --color-text-heading-dark: #f5f4f2;
   --color-text-body-dark: #c7c6c3;
 
-  /* Radius — sharp, editorial per Section 5; overrides shadcn's default */
-  --radius: 4px;
+  /* Radius — softer, modern editorial curve */
+  --radius: 8px;
 }
+

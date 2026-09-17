@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { CheckCircle2, EyeOff, UserX, RefreshCw } from "lucide-react";
 import {
   dismissReportAction,
   unpublishArticleAction,
@@ -41,53 +42,72 @@ export function ReportActions({ reportId, articleId, authorUserId }: ReportActio
   };
 
   return (
-    <div>
-      <div className="flex flex-wrap gap-3">
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-3">
+        {/* Dismiss Report */}
         <button
           type="button"
-          onClick={() => run("Report dismissed.", () => dismissReportAction(reportId))}
+          onClick={() => run("Report dismissed with no action taken.", () => dismissReportAction(reportId))}
           disabled={isPending}
-          className="h-10 rounded-[4px] border border-border-strong px-4 text-sm font-semibold text-text-body transition-colors hover:bg-bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border/80 bg-surface px-5 py-2.5 text-xs font-semibold text-text-heading shadow-2xs transition-all hover:bg-bg-alt hover:border-border-strong disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Dismiss
+          {isPending ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5 text-text-muted" />}
+          Dismiss Report (No Violation)
         </button>
+
+        {/* Unpublish Article */}
         <button
           type="button"
           onClick={async () => {
             const confirmed = await confirm({
-              title: "Unpublish this article?",
-              message: "It will be hidden from public view immediately.",
-              confirmLabel: "Unpublish",
+              title: "Unpublish this article immediately?",
+              message: "The story will be removed from public discovery and search indexes. The author will be notified.",
+              confirmLabel: "Unpublish Story",
             });
             if (!confirmed) return;
-            run("Article unpublished.", () => unpublishArticleAction(reportId, articleId));
+            run("Article has been unpublished.", () => unpublishArticleAction(reportId, articleId));
           }}
           disabled={isPending}
-          className="h-10 rounded-[4px] border border-warning bg-warning/10 px-4 text-sm font-semibold text-warning transition-colors hover:bg-warning/20 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex min-h-11 items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-5 py-2.5 text-xs font-semibold text-amber-700 dark:text-amber-300 shadow-2xs transition-all hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-60"
         >
+          {isPending ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <EyeOff className="h-3.5 w-3.5" />}
           Unpublish Article
         </button>
+
+        {/* Suspend Author */}
         {authorUserId && (
           <button
             type="button"
             onClick={async () => {
               const confirmed = await confirm({
-                title: "Suspend this author?",
-                message: "All of their published articles will be hidden immediately.",
-                confirmLabel: "Suspend author",
+                title: "Suspend this author's account?",
+                message: "All of their published stories will be hidden immediately and publishing will be revoked. An email notice will be dispatched.",
+                confirmLabel: "Suspend Author Account",
               });
               if (!confirmed) return;
-              run("Author suspended.", () => suspendAuthorForReportAction(reportId, authorUserId));
+              run("Author account suspended.", () => suspendAuthorForReportAction(reportId, authorUserId));
             }}
             disabled={isPending}
-            className="h-10 rounded-[4px] border border-error bg-error/10 px-4 text-sm font-semibold text-error transition-colors hover:bg-error/20 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex min-h-11 items-center gap-2 rounded-full border border-red-500/30 bg-red-500/10 px-5 py-2.5 text-xs font-semibold text-red-600 dark:text-red-400 shadow-2xs transition-all hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Suspend Author
+            {isPending ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <UserX className="h-3.5 w-3.5" />}
+            Suspend Author Account
           </button>
         )}
       </div>
-      {isPending && <p className="mt-2 text-xs text-text-muted">Working...</p>}
-      {error && <p role="alert" className="mt-2 text-sm text-error">{error}</p>}
+
+      {isPending && (
+        <p className="flex items-center gap-2 text-xs font-medium text-text-muted">
+          <RefreshCw className="h-3 w-3 animate-spin" />
+          Processing administrative action...
+        </p>
+      )}
+
+      {error && (
+        <p role="alert" className="text-xs font-medium text-error">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

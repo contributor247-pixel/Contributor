@@ -40,3 +40,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# scratch / QA test scripts and output (consolidated here — do not
+# recreate a separate _test-assets/ or similar folder, put ad-hoc
+# scripts and screenshots under this one instead)
+/.zz_final_audit/
+
+# project spec/reference material — local-only, not pushed to the repo
+/docs/
+/Refrence/

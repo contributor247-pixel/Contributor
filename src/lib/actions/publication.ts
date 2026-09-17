@@ -13,7 +13,7 @@ import {
 import { requireVerifiedAuthor, requireAuthorPro, ForbiddenError } from "@/lib/permissions";
 import { publicationSchema, type PublicationInput } from "@/lib/validators/publication";
 import { slugify } from "@/lib/slugify";
-import { resend } from "@/lib/resend";
+import { mailer } from "@/lib/mailer";
 import { PublicationInviteEmail } from "@/emails/publication-invite";
 import { InviteResponseNoticeEmail } from "@/emails/invite-response-notice";
 
@@ -51,16 +51,27 @@ export async function createPublicationAction(input: PublicationInput): Promise<
   const data = parsed.data;
   const slug = await generateUniquePublicationSlug(data.name);
 
-  const [publication] = await db
-    .insert(publications)
-    .values({
-      name: data.name,
-      slug,
-      description: data.description ?? null,
-      coverImageUrl: data.coverImageUrl ?? null,
-      ownerId: session.user.id,
-    })
-    .returning();
+  let publication;
+  try {
+    [publication] = await db
+      .insert(publications)
+      .values({
+        name: data.name,
+        slug,
+        description: data.description ?? null,
+        coverImageUrl: data.coverImageUrl ?? null,
+        ownerId: session.user.id,
+      })
+      .returning();
+  } catch {
+    // Most likely a slug collision from a near-simultaneous duplicate
+    // submission — generateUniquePublicationSlug's read-then-insert
+    // isn't transactional. Surfacing this distinctly instead of
+    // letting it throw uncaught matters because PublicationForm's
+    // catch-all message blames "a large cover image", which would be
+    // actively misleading here.
+    return { success: false, error: "Couldn't save — a very similar publication name was just created. Please try again." };
+  }
 
   return { success: true, publicationId: publication.id, slug: publication.slug };
 }
@@ -125,10 +136,15 @@ export async function searchContributorCandidatesAction(query: string): Promise<
   const session = await requireVerifiedAuthor();
   if (!query.trim()) return [];
 
+  // Only role "author" — Admin is excluded from being invited as a
+  // Publication contributor (docs/00_ScopeDocument.md Section 3, and
+  // consistent with requireVerifiedAuthor() now requiring role
+  // "author" for respondToInviteAction: an admin surfaced here could
+  // be invited but could never accept, a dead-end invite.
   const rows = await db
     .select({ id: users.id, name: users.name, email: users.email, role: users.role, status: users.status })
     .from(users)
-    .where(inArray(users.role, ["author", "admin"]))
+    .where(eq(users.role, "author"))
     .limit(50);
 
   const needle = query.trim().toLowerCase();
@@ -144,6 +160,22 @@ export type InviteActionResult = { success: true } | { success: false; error: st
 
 export async function sendInviteAction(publicationId: string, invitedUserId: string): Promise<InviteActionResult> {
   const session = await requireVerifiedAuthor();
+
+  // Publication ownership alone isn't enough here — Section 3's lapse
+  // rule ("Owner cannot create new Premium content or new Publications
+  // while lapsed") extends to inviting new contributors too: without
+  // this, an Owner whose AuthorPro subscription has since expired could
+  // keep growing a Publication indefinitely. Re-checked live per call,
+  // same as createPublicationAction and resolvePremiumFields, rather
+  // than trusting that owning the row still implies an active plan.
+  try {
+    await requireAuthorPro();
+  } catch (err) {
+    if (err instanceof ForbiddenError) {
+      return { success: false, error: "Your AuthorPro subscription has lapsed — renew it to invite new contributors." };
+    }
+    throw err;
+  }
 
   const [publication] = await db.select().from(publications).where(eq(publications.id, publicationId)).limit(1);
   if (!publication || publication.ownerId !== session.user.id) {
@@ -197,8 +229,8 @@ export async function sendInviteAction(publicationId: string, invitedUserId: str
         invitesUrl,
       })
     );
-    const { error } = await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL ?? "Contributor <onboarding@resend.dev>",
+    const { error } = await mailer.emails.send({
+      from: process.env.EMAIL_FROM ?? "Contributor <onboarding@contributor.app>",
       to: invitedUser.email,
       subject: `You've been invited to contribute to ${publication.name}`,
       html,
@@ -283,8 +315,8 @@ export async function respondToInviteAction(
             publicationUrl,
           })
         );
-        const { error } = await resend.emails.send({
-          from: process.env.RESEND_FROM_EMAIL ?? "Contributor <onboarding@resend.dev>",
+        const { error } = await mailer.emails.send({
+          from: process.env.EMAIL_FROM ?? "Contributor <onboarding@contributor.app>",
           to: owner.email,
           subject: `${session.user.name ?? "An author"} ${response} your invite to ${publication.name}`,
           html,

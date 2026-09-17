@@ -1,22 +1,37 @@
-// Mirrors PublicationsPage's card-list (not a table).
+import { SkeletonBlock } from "@/components/shared/SkeletonBlock";
+
+// Mirrors PublicationsPage's responsive cards grid.
 export default function PublicationsLoading() {
   return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
-        <div className="h-8 w-44 animate-pulse rounded bg-bg-muted" />
-        <div className="h-10 w-40 animate-pulse rounded-[4px] bg-bg-muted" />
+    <div className="space-y-6">
+      <div className="flex items-center justify-between border-b border-border/80 pb-5">
+        <div className="space-y-2">
+          <SkeletonBlock className="h-4 w-28 rounded-full" />
+          <SkeletonBlock className="h-8 w-52 rounded-lg" />
+          <SkeletonBlock className="h-3 w-80" />
+        </div>
+        <SkeletonBlock className="h-9 w-36 rounded-full" />
       </div>
-      <ul className="flex flex-col gap-3">
-        {[0, 1, 2].map((i) => (
-          <li key={i} className="flex items-center justify-between rounded-[4px] border border-border-strong p-4">
-            <div className="flex flex-col gap-1.5">
-              <div className="h-4 w-40 animate-pulse rounded bg-bg-muted" />
-              <div className="h-3 w-20 animate-pulse rounded bg-bg-muted" />
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {[0, 1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="rounded-2xl border border-border/80 bg-surface p-6 shadow-xs space-y-4"
+          >
+            <div className="flex items-start justify-between">
+              <SkeletonBlock className="h-11 w-11 rounded-xl" />
+              <SkeletonBlock className="h-5 w-20 rounded-full" />
             </div>
-            <div className="h-4 w-16 animate-pulse rounded bg-bg-muted" />
-          </li>
+            <SkeletonBlock className="h-5 w-40" />
+            <SkeletonBlock className="h-3 w-full" />
+            <div className="pt-4 border-t border-border/60 flex justify-between">
+              <SkeletonBlock className="h-3 w-20" />
+              <SkeletonBlock className="h-3 w-24" />
+            </div>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }

@@ -139,7 +139,7 @@ export function AdminLoginClient() {
           </button>
         </form>
 
-        <p className="mt-6 text-center text-xs text-white/30">
+        <p className="mt-6 text-center text-xs text-white/50">
           This page is for platform administrators only.
         </p>
       </div>

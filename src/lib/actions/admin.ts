@@ -13,9 +13,10 @@ import {
   platformConfig,
   ledger,
   notifications,
+  subscriptions,
 } from "../../../drizzle/schema/index";
 import { requireRole } from "@/lib/permissions";
-import { resend } from "@/lib/resend";
+import { mailer } from "@/lib/mailer";
 import { ModerationNoticeEmail } from "@/emails/moderation-notice";
 
 const DASHBOARD_BASE_URL = process.env.AUTH_URL ?? "http://localhost:3000";
@@ -49,8 +50,8 @@ async function notifyModerationAction(params: {
         dashboardUrl: `${DASHBOARD_BASE_URL}/dashboard/author`,
       })
     );
-    const { error } = await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL ?? "Contributor <onboarding@resend.dev>",
+    const { error } = await mailer.emails.send({
+      from: process.env.EMAIL_FROM ?? "Contributor <onboarding@contributor.app>",
       to: author.email,
       subject:
         params.action === "unpublished" ? "One of your articles was unpublished" : "Your Contributor account has been suspended",
@@ -105,6 +106,29 @@ export async function getAdminUsers(page: number, perPage: number, search?: stri
 
   const [{ value: totalCount }] = await db.select({ value: count() }).from(users).where(where);
 
+  // isAuthorPro: an EXISTS subquery against a live, non-expired
+  // author_pro subscription row — the same active/currentPeriodEnd
+  // criteria requireAuthorPro() uses everywhere else (permissions.ts),
+  // so this list matches what actually gates Premium/Publication
+  // actions rather than a stale/cached notion of "Pro." A user can
+  // have multiple historical subscription rows (past cancellations,
+  // renewals), so this is an existence check, not a join that could
+  // multiply/duplicate user rows.
+  //
+  // The outer table is referenced as the literal "users"."id" rather
+  // than via ${users.id} — inside this raw subquery template, Drizzle
+  // renders ${users.id} as the bare unqualified column "id" (no table
+  // prefix), which inside "SELECT 1 FROM subscriptions ..." resolves
+  // against subscriptions, not the outer users row, silently breaking
+  // the correlation so isAuthorPro always evaluated false regardless
+  // of real subscription data (confirmed by hand: a user with a real
+  // active, far-future-expiring subscription still came back false;
+  // switching to the literal-quoted table.column reference fixed it —
+  // verified the same case then correctly returns true). A JS Date is
+  // still bound as a parameter for currentPeriodEnd rather than SQL's
+  // now(), consistent with how the rest of the codebase does this
+  // comparison (see requireAuthorPro in permissions.ts).
+  const nowParam = new Date();
   const rows = await db
     .select({
       id: users.id,
@@ -114,6 +138,13 @@ export async function getAdminUsers(page: number, perPage: number, search?: stri
       status: users.status,
       emailVerified: users.emailVerified,
       createdAt: users.createdAt,
+      isAuthorPro: rawSql<boolean>`EXISTS (
+        SELECT 1 FROM ${subscriptions}
+        WHERE ${subscriptions.userId} = "users"."id"
+          AND ${subscriptions.type} = 'author_pro'
+          AND ${subscriptions.status} = 'active'
+          AND ${subscriptions.currentPeriodEnd} > ${nowParam}
+      )`,
     })
     .from(users)
     .where(where)
@@ -334,6 +365,15 @@ export async function renameCategoryAction(categoryId: string, name: string): Pr
   const trimmed = name.trim();
   if (!trimmed) return { success: false, error: "Category name is required." };
 
+  const [existing] = await db
+    .select({ id: categories.id })
+    .from(categories)
+    .where(eq(categories.name, trimmed))
+    .limit(1);
+  if (existing && existing.id !== categoryId) {
+    return { success: false, error: "A category with this name already exists." };
+  }
+
   await db.update(categories).set({ name: trimmed }).where(eq(categories.id, categoryId));
   revalidatePath("/dashboard/admin/settings/categories");
   return { success: true };
@@ -363,6 +403,7 @@ export interface FeeConfigInput {
   platformSubYearlyCents: number;
   payPerArticleMinCents: number;
   payPerArticleMaxCents: number;
+  payPerArticleDefaultCents: number;
   standaloneAuthorSplitPct: number;
   standalonePlatformSplitPct: number;
   inPublicationAuthorSplitPct: number;
@@ -378,8 +419,31 @@ export async function updatePlatformConfigAction(input: FeeConfigInput): Promise
       return { success: false, error: `${key} must be a non-negative whole number of cents/percent.` };
     }
   }
+  // Stripe rejects a $0 recurring price outright — without this check
+  // an admin could save a 0-cent subscription price here and every
+  // checkout attempt for it would fail with an unhandled Stripe API
+  // error instead of a clean message.
+  const SUBSCRIPTION_PRICE_FIELDS: (keyof FeeConfigInput)[] = [
+    "authorProMonthlyCents",
+    "authorProYearlyCents",
+    "publicationSubMonthlyCents",
+    "publicationSubYearlyCents",
+    "platformSubMonthlyCents",
+    "platformSubYearlyCents",
+  ];
+  for (const key of SUBSCRIPTION_PRICE_FIELDS) {
+    if (input[key] <= 0) {
+      return { success: false, error: `${key} must be greater than $0.` };
+    }
+  }
   if (input.payPerArticleMinCents > input.payPerArticleMaxCents) {
     return { success: false, error: "Pay-per-article minimum cannot exceed the maximum." };
+  }
+  if (
+    input.payPerArticleDefaultCents < input.payPerArticleMinCents ||
+    input.payPerArticleDefaultCents > input.payPerArticleMaxCents
+  ) {
+    return { success: false, error: "Pay-per-article default must fall within the min/max range." };
   }
   if (input.standaloneAuthorSplitPct + input.standalonePlatformSplitPct !== 100) {
     return { success: false, error: "Standalone split percentages must add up to exactly 100." };

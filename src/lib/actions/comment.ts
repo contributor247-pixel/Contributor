@@ -3,7 +3,7 @@
 import { and, asc, eq, isNull } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { comments, users } from "../../../drizzle/schema/index";
-import { requireAuth } from "@/lib/permissions";
+import { requireAuth, SuspendedError } from "@/lib/permissions";
 import { commentSchema, type CommentInput } from "@/lib/validators/comment";
 
 export type CommentActionResult = { success: true } | { success: false; error: string };
@@ -13,7 +13,22 @@ export type PostCommentResult =
   | { success: false; error: string };
 
 export async function postCommentAction(input: CommentInput): Promise<PostCommentResult> {
-  const session = await requireAuth();
+  let session;
+  try {
+    session = await requireAuth();
+  } catch (err) {
+    // requireAuth throwing here isn't the "not logged in" case — the
+    // client already gates that (CommentForm shows a sign-in prompt
+    // instead of the form when there's no session). It's a session
+    // that was valid when the page loaded but the account has since
+    // been suspended — letting this throw uncaught surfaces the
+    // generic "Something went wrong" error boundary instead of a
+    // message that tells the user what actually happened.
+    if (err instanceof SuspendedError) {
+      return { success: false, error: "Your account has been suspended." };
+    }
+    throw err;
+  }
   const parsed = commentSchema.safeParse(input);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid comment" };
@@ -30,7 +45,15 @@ export async function postCommentAction(input: CommentInput): Promise<PostCommen
 }
 
 export async function deleteCommentAction(commentId: string): Promise<CommentActionResult> {
-  const session = await requireAuth();
+  let session;
+  try {
+    session = await requireAuth();
+  } catch (err) {
+    if (err instanceof SuspendedError) {
+      return { success: false, error: "Your account has been suspended." };
+    }
+    throw err;
+  }
   const [existing] = await db.select().from(comments).where(eq(comments.id, commentId)).limit(1);
   if (!existing || existing.deletedAt) {
     return { success: false, error: "Comment not found" };

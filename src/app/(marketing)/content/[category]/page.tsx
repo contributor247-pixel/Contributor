@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { categories } from "../../../../../drizzle/schema/index";
+import { getPopularCategoryPills } from "@/lib/queries/articles";
 import { HeroBand } from "@/components/shared/HeroBand";
+import { TopicExplorerStrip } from "@/components/shared/TopicExplorerStrip";
 import { SectionContainer } from "@/components/shared/SectionContainer";
 import { ArticleListingGrid } from "@/components/shared/ArticleListingGrid";
 import { buildMetadata } from "@/lib/seo";
@@ -27,7 +29,10 @@ export async function generateMetadata({ params }: CategoryListingPageProps): Pr
 
 export default async function CategoryListingPage({ params, searchParams }: CategoryListingPageProps) {
   const { category: categorySlug } = await params;
-  const { page: pageParam } = await searchParams;
+  const [{ page: pageParam }, popularCategories] = await Promise.all([
+    searchParams,
+    getPopularCategoryPills(12),
+  ]);
   const page = Math.max(1, Number(pageParam) || 1);
 
   const [category] = await db.select().from(categories).where(eq(categories.slug, categorySlug)).limit(1);
@@ -36,12 +41,18 @@ export default async function CategoryListingPage({ params, searchParams }: Cate
   return (
     <>
       <HeroBand
-        eyebrow="Discover All Topics"
+        eyebrow="Curated Topic Archive"
         title={category.name}
-        description={`Explore every published article in ${category.name}.`}
+        description={`Explore all published stories and critical perspectives in ${category.name}.`}
       />
+      <TopicExplorerStrip categories={popularCategories} activeSlug={categorySlug} />
       <SectionContainer>
-        <ArticleListingGrid page={page} basePath={`/content/${categorySlug}`} categorySlug={categorySlug} />
+        <ArticleListingGrid
+          page={page}
+          basePath={`/content/${categorySlug}`}
+          categorySlug={categorySlug}
+          categoryName={category.name}
+        />
       </SectionContainer>
     </>
   );

@@ -88,7 +88,7 @@ export function PublishSettingsDrawer(props: PublishSettingsDrawerProps) {
                 </DialogPrimitive.Title>
                 <DialogPrimitive.Close
                   aria-label="Close"
-                  className="flex h-11 w-11 items-center justify-center rounded-[4px] text-text-muted transition-colors hover:bg-bg-muted hover:text-text-body sm:h-9 sm:w-9"
+                  className="flex h-11 w-11 items-center justify-center rounded-[4px] text-text-muted transition-colors hover:bg-bg-muted hover:text-text-body lg:h-9 lg:w-9"
                 >
                   <X className="h-5 w-5" aria-hidden="true" />
                 </DialogPrimitive.Close>
@@ -150,7 +150,7 @@ export function PublishSettingsDrawer(props: PublishSettingsDrawerProps) {
                           type="button"
                           onClick={() => props.onRemoveTag(tag)}
                           aria-label={`Remove tag ${tag}`}
-                          className="text-text-muted hover:text-error"
+                          className="-my-2 -mr-2 p-2 text-text-muted hover:text-error"
                         >
                           &times;
                         </button>
@@ -213,7 +213,7 @@ export function PublishSettingsDrawer(props: PublishSettingsDrawerProps) {
                           max={props.eligibility.maxPriceCents / 100}
                           value={props.priceInput}
                           onChange={(e) => props.onPriceInputChange(e.target.value)}
-                          placeholder="4.99"
+                          placeholder={(props.eligibility.defaultPriceCents / 100).toFixed(2)}
                           className="h-11 w-40 rounded-[4px] border border-border-strong px-3 text-sm text-text-body focus:border-ink focus:outline-none focus:ring-[3px] focus:ring-[#14141a14]"
                         />
                         {props.priceError && <p role="alert" className="mt-1 text-sm text-error">{props.priceError}</p>}
@@ -238,7 +238,7 @@ export function PublishSettingsDrawer(props: PublishSettingsDrawerProps) {
                           type="button"
                           onClick={() => props.onRemoveCoAuthor(c.id)}
                           aria-label={`Remove co-author ${c.name ?? c.email}`}
-                          className="text-text-muted hover:text-error"
+                          className="-my-2 -mr-2 p-2 text-text-muted hover:text-error"
                         >
                           &times;
                         </button>

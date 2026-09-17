@@ -32,7 +32,15 @@ export function ContributorInvite({ publicationId }: ContributorInviteProps) {
       try {
         const res = await fetch(`/api/users/search?q=${encodeURIComponent(value)}`);
         const data = await res.json();
+        if (!res.ok) {
+          setError(data?.error ?? "Search failed. Please try again.");
+          setResults([]);
+          return;
+        }
         setResults(data.results ?? []);
+      } catch {
+        setError("Search failed. Please try again.");
+        setResults([]);
       } finally {
         setIsSearching(false);
       }

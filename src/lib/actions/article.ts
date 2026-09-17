@@ -1,6 +1,6 @@
 "use server";
 
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   articles,
@@ -31,8 +31,18 @@ async function resolveTagIds(tagNames: string[]): Promise<string[]> {
       ids.push(existing.id);
       continue;
     }
-    const [created] = await db.insert(tags).values({ name, slug }).returning();
-    ids.push(created.id);
+    // Check-then-insert isn't atomic: two articles saved concurrently
+    // with the same brand-new tag can both miss the existence check
+    // above and both attempt to insert it. onConflictDoNothing makes
+    // the losing insert a no-op instead of an unhandled unique-
+    // constraint throw, and the re-select picks up the winner's row.
+    const [created] = await db.insert(tags).values({ name, slug }).onConflictDoNothing().returning();
+    if (created) {
+      ids.push(created.id);
+      continue;
+    }
+    const [winner] = await db.select().from(tags).where(eq(tags.slug, slug)).limit(1);
+    if (winner) ids.push(winner.id);
   }
   return ids;
 }
@@ -150,22 +160,33 @@ export async function createArticleAction(input: ArticleInput): Promise<ArticleA
   const slug = await generateUniqueSlug(data.title);
   const tagIds = await resolveTagIds(data.tags);
 
-  const [article] = await db
-    .insert(articles)
-    .values({
-      title: data.title,
-      slug,
-      body: { html: data.body },
-      excerpt: buildExcerpt(data.body),
-      coverImageUrl: data.coverImageUrl ?? null,
-      categoryId: data.categoryId,
-      publicationId,
-      isPremium,
-      priceCents,
-      status: data.status,
-      publishedAt: data.status === "published" ? new Date() : null,
-    })
-    .returning();
+  let article;
+  try {
+    [article] = await db
+      .insert(articles)
+      .values({
+        title: data.title,
+        slug,
+        body: { html: data.body },
+        excerpt: buildExcerpt(data.body),
+        coverImageUrl: data.coverImageUrl ?? null,
+        categoryId: data.categoryId,
+        publicationId,
+        isPremium,
+        priceCents,
+        status: data.status,
+        publishedAt: data.status === "published" ? new Date() : null,
+      })
+      .returning();
+  } catch {
+    // Most likely a slug collision from a near-simultaneous duplicate
+    // submission — generateUniqueSlug's read-then-insert isn't
+    // transactional, so two requests for the same title can race.
+    // Surfacing this distinctly instead of letting it throw uncaught
+    // matters because ArticleForm's catch-all message blames "large
+    // images", which would be actively misleading here.
+    return { success: false, error: "Couldn't save — a very similar title was just published. Please try again." };
+  }
 
   const authorRows = [
     { articleId: article.id, userId: session.user.id, isPrimary: true },
@@ -278,6 +299,7 @@ export type PremiumEligibility = {
   isAuthorPro: boolean;
   minPriceCents: number;
   maxPriceCents: number;
+  defaultPriceCents: number;
 };
 
 // Called by the article form to decide whether to show the Premium
@@ -298,6 +320,7 @@ export async function getPremiumEligibilityAction(): Promise<PremiumEligibility>
     isAuthorPro,
     minPriceCents: config?.payPerArticleMinCents ?? 99,
     maxPriceCents: config?.payPerArticleMaxCents ?? 4999,
+    defaultPriceCents: config?.payPerArticleDefaultCents ?? 499,
   };
 }
 
@@ -307,10 +330,15 @@ export async function searchAuthorsAction(query: string): Promise<CoAuthorCandid
   const session = await requireVerifiedAuthor();
   if (!query.trim()) return [];
 
+  // Only role "author" — Admin is excluded from co-authoring an
+  // article (docs/00_ScopeDocument.md Section 3). Admin surfaced here
+  // could be added as a co-author with no ability to ever see/manage
+  // that article on their own dashboard (requireVerifiedAuthor() now
+  // requires role "author"), a dead-end co-authorship.
   const rows = await db
     .select({ id: users.id, name: users.name, email: users.email, role: users.role, status: users.status })
     .from(users)
-    .where(inArray(users.role, ["author", "admin"]))
+    .where(eq(users.role, "author"))
     .limit(50);
 
   const needle = query.trim().toLowerCase();

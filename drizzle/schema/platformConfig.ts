@@ -13,6 +13,11 @@ export const platformConfig = pgTable("platform_config", {
   platformSubYearlyCents: integer("platform_sub_yearly_cents").notNull(),
   payPerArticleMinCents: integer("pay_per_article_min_cents").notNull(),
   payPerArticleMaxCents: integer("pay_per_article_max_cents").notNull(),
+  // The price a new Premium article's price field is pre-filled with —
+  // docs/00_ScopeDocument.md Section 8 asks for "default/min/max
+  // pricing rules" as three distinct admin-editable values; only
+  // min/max existed before this column.
+  payPerArticleDefaultCents: integer("pay_per_article_default_cents").notNull(),
   standaloneAuthorSplitPct: integer("standalone_author_split_pct").notNull(),
   standalonePlatformSplitPct: integer("standalone_platform_split_pct").notNull(),
   inPublicationAuthorSplitPct: integer("in_publication_author_split_pct").notNull(),

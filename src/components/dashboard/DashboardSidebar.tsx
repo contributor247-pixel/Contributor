@@ -102,20 +102,29 @@ export function DashboardSidebar({
           isOpen ? "translate-x-0" : "-translate-x-full",
         ].join(" ")}
       >
-        <div className="flex h-20 shrink-0 items-center border-b border-white/10 px-5">
-          <Link href="/" onClick={onClose} className="flex items-center">
+        <div className="flex h-20 shrink-0 items-center justify-center border-b border-white/10 px-5">
+          <Link href="/" onClick={onClose} className="flex items-center justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element -- static asset in public/, not worth next/image's overhead for a fixed-size sidebar logo */}
-            <img src="/logo/logo-dark.png" alt="Contributor" className="h-8 w-auto" />
+            <img src="/logo/logo-dark.png" alt="Contributor" className="h-11 w-auto" />
           </Link>
         </div>
         <div className="px-5 pb-3 pt-5">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50">
             {ROLE_LABEL[role]} Dashboard
           </p>
         </div>
         <nav className="flex flex-1 flex-col gap-1 px-3" aria-label="Dashboard">
           {navItems.map((item) => {
-            const isActive = pathname === item.href;
+            // Exact-match only would miss nested routes like
+            // /dashboard/author/articles/[id]/edit, leaving "My
+            // Articles" unhighlighted while editing an article. The
+            // Overview link (bare /dashboard/{role}) is the one item
+            // that must stay exact-match, or it would also light up
+            // for every other item's nested routes.
+            const isOverview = item.href === `/dashboard/${role}`;
+            const isActive = isOverview
+              ? pathname === item.href
+              : pathname === item.href || pathname.startsWith(`${item.href}/`);
             const Icon = item.icon;
             return (
               <Link
@@ -124,7 +133,7 @@ export function DashboardSidebar({
                 onClick={onClose}
                 aria-current={isActive ? "page" : undefined}
                 className={[
-                  "group relative flex items-center gap-3 rounded-[4px] px-3 py-2.5 text-sm transition-all duration-150",
+                  "group relative flex min-h-11 items-center gap-3 rounded-[4px] px-3 py-2.5 text-sm transition-all duration-150",
                   isActive
                     ? "bg-gradient-to-r from-primary/25 via-primary/10 to-transparent font-semibold text-white shadow-[inset_0_0_0_1px_rgba(139,30,63,0.35)]"
                     : "text-white/60 hover:bg-white/[0.06] hover:text-white/90",

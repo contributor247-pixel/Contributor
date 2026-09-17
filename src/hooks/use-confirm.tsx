@@ -83,7 +83,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
                     type="button"
                     autoFocus
                     onClick={() => handleResolve(false)}
-                    className="flex h-10 items-center rounded-[4px] border border-border-strong px-4 text-sm font-semibold text-text-body transition-colors hover:bg-bg-muted"
+                    className="flex h-11 items-center rounded-[4px] border border-border-strong px-4 text-sm font-semibold text-text-body transition-colors hover:bg-bg-muted"
                   >
                     {options.cancelLabel ?? "Cancel"}
                   </button>
@@ -92,8 +92,8 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
                     onClick={() => handleResolve(true)}
                     className={
                       options.destructive !== false
-                        ? "flex h-10 items-center rounded-[4px] bg-error px-4 text-sm font-semibold text-white transition-colors hover:bg-error/90"
-                        : "flex h-10 items-center rounded-[4px] bg-ink px-4 text-sm font-semibold text-white transition-colors hover:bg-primary"
+                        ? "flex h-11 items-center rounded-[4px] bg-error px-4 text-sm font-semibold text-white transition-colors hover:bg-error/90"
+                        : "flex h-11 items-center rounded-[4px] bg-ink px-4 text-sm font-semibold text-white transition-colors hover:bg-primary"
                     }
                   >
                     {options.confirmLabel ?? "Confirm"}

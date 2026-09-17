@@ -23,14 +23,26 @@ export function VerifyOtpClient({ redirectTo = "/" }: { redirectTo?: string }) {
     }
     setIsSubmitting(true);
     const result = await submitOtpAction(code);
-    setIsSubmitting(false);
     if (!result.success) {
+      setIsSubmitting(false);
       setError(result.error);
       return;
     }
-    await update({ twoFactorVerified: true });
-    router.push(redirectTo);
-    router.refresh();
+    // The code is already consumed server-side at this point — it
+    // can't be retried, so if the session refresh below hangs or
+    // fails, the button staying on "Verifying..." (rather than
+    // resetting to a clickable "Verify" that would submit an
+    // already-used code) is the honest state to show. A stuck loading
+    // state is still better than a silent dead end with no
+    // explanation of why nothing happened.
+    try {
+      await update({ twoFactorVerified: true });
+      router.push(redirectTo);
+      router.refresh();
+    } catch {
+      setIsSubmitting(false);
+      setError("Verified, but couldn't complete sign-in. Please refresh the page.");
+    }
   };
 
   const handleResend = async () => {

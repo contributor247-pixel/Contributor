@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { purchases, subscriptions, users, articles, notifications } from "../../../../../drizzle/schema/index";
 import { stripe } from "@/lib/stripe";
 import { calculateAndRecordSplit, distributePooledSubscriptionRevenue } from "@/lib/revenue-split";
-import { resend } from "@/lib/resend";
+import { mailer } from "@/lib/mailer";
 import { PurchaseReceiptEmail } from "@/emails/purchase-receipt";
 
 type SubscriptionType = "author_pro" | "publication" | "platform";
@@ -25,8 +25,8 @@ async function sendPurchaseReceipt(userId: string, itemLabel: string, amountCent
         dashboardUrl: `${DASHBOARD_BASE_URL}${dashboardPath}`,
       })
     );
-    const { error } = await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL ?? "Contributor <onboarding@resend.dev>",
+    const { error } = await mailer.emails.send({
+      from: process.env.EMAIL_FROM ?? "Contributor <onboarding@contributor.app>",
       to: recipient.email,
       subject: `Your receipt for ${itemLabel}`,
       html,
@@ -177,22 +177,26 @@ export async function POST(request: Request) {
             ? checkoutSession.payment_intent
             : checkoutSession.payment_intent?.id ?? null;
         if (articleId && userId && checkoutSession.amount_total != null && paymentIntentId) {
-          const [existing] = await db
-            .select({ id: purchases.id })
-            .from(purchases)
-            .where(eq(purchases.stripePaymentIntentId, paymentIntentId))
-            .limit(1);
-          if (!existing) {
-            const [purchase] = await db
-              .insert(purchases)
-              .values({
-                userId,
-                articleId,
-                amountCents: checkoutSession.amount_total,
-                stripePaymentIntentId: paymentIntentId,
-              })
-              .returning();
-            await calculateAndRecordSplit(articleId, checkoutSession.amount_total, "purchase", purchase.id);
+          // Stripe only guarantees at-least-once webhook delivery, so this
+          // event can arrive more than once for the same payment. The
+          // unique index on stripePaymentIntentId (see drizzle/schema/
+          // purchases.ts) is what actually prevents a duplicate row under
+          // concurrent/duplicate delivery — onConflictDoNothing makes the
+          // insert itself race-safe instead of relying solely on the
+          // separate existence check below, which is a check-then-insert
+          // race on its own.
+          const [purchase] = await db
+            .insert(purchases)
+            .values({
+              userId,
+              articleId,
+              amountCents: checkoutSession.amount_total,
+              stripePaymentIntentId: paymentIntentId,
+            })
+            .onConflictDoNothing({ target: purchases.stripePaymentIntentId })
+            .returning();
+          if (purchase) {
+            await calculateAndRecordSplit(articleId, checkoutSession.amount_total, "purchase", purchase.id, userId);
 
             const [article] = await db.select({ title: articles.title }).from(articles).where(eq(articles.id, articleId)).limit(1);
             await sendPurchaseReceipt(

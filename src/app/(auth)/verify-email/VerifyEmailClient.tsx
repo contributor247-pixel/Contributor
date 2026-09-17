@@ -1,19 +1,56 @@
 "use client";
 
-import { useState } from "react";
-import { CheckCircle, XCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { getSession } from "next-auth/react";
+import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { useAuthModal } from "@/hooks/use-auth-modal";
-import { resendVerificationAction } from "@/lib/actions/verify-email";
+import { resendVerificationAction, completeAutoLoginAction } from "@/lib/actions/verify-email";
 
 interface VerifyEmailClientProps {
   status: "success" | "invalid" | "expired";
   email?: string;
+  autoLoginToken?: string;
 }
 
-export function VerifyEmailClient({ status, email }: VerifyEmailClientProps) {
+export function VerifyEmailClient({ status, email, autoLoginToken }: VerifyEmailClientProps) {
   const { open } = useAuthModal();
+  const router = useRouter();
   const [resendState, setResendState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [resendError, setResendError] = useState<string | null>(null);
+  // docs/01_ApplicationFlow.md Flow A step 6: auto-log the visitor in
+  // right after verification instead of making them sign in again.
+  // "signing-in" is the default (not "idle") so success never flashes
+  // a "Continue to sign in" button an instant before the redirect away
+  // from this page.
+  const [autoLoginState, setAutoLoginState] = useState<"signing-in" | "failed">("signing-in");
+
+  useEffect(() => {
+    if (status !== "success" || !email || !autoLoginToken) return;
+    let cancelled = false;
+    (async () => {
+      const result = await completeAutoLoginAction(email, autoLoginToken);
+      if (cancelled) return;
+      if (!result.success) {
+        setAutoLoginState("failed");
+        return;
+      }
+      // Author/Admin still need OTP even on this path (auth.ts fires it
+      // unconditionally for those roles) — getSession() reflects
+      // whichever the credentials authorize() callback just returned,
+      // so this redirects to the right next step for either role.
+      const session = await getSession();
+      if (session?.user && !session.user.twoFactorVerified) {
+        router.push("/verify-otp");
+      } else {
+        router.push("/");
+        router.refresh();
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [status, email, autoLoginToken, router]);
 
   const handleResend = async () => {
     if (!email) return;
@@ -38,16 +75,30 @@ export function VerifyEmailClient({ status, email }: VerifyEmailClientProps) {
             <h1 className="mb-2 font-serif text-2xl font-semibold text-text-heading">
               Email verified
             </h1>
-            <p className="mb-6 text-sm text-text-muted">
-              Your account is confirmed. You can now sign in to Contributor.
-            </p>
-            <button
-              type="button"
-              onClick={() => open("login")}
-              className="h-12 w-full rounded-[4px] bg-ink text-sm font-semibold text-white transition-colors hover:bg-primary"
-            >
-              Continue to sign in
-            </button>
+            {autoLoginState === "signing-in" ? (
+              <>
+                <p className="mb-6 text-sm text-text-muted">
+                  Your account is confirmed. Signing you in...
+                </p>
+                <div className="flex h-12 w-full items-center justify-center rounded-[4px] bg-bg-muted text-sm font-semibold text-text-muted">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                  Signing in
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="mb-6 text-sm text-text-muted">
+                  Your account is confirmed. You can now sign in to Contributor.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => open("login")}
+                  className="h-12 w-full rounded-[4px] bg-ink text-sm font-semibold text-white transition-colors hover:bg-primary"
+                >
+                  Continue to sign in
+                </button>
+              </>
+            )}
           </>
         ) : (
           <>

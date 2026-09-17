@@ -4,12 +4,14 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { deleteArticleAction } from "@/lib/actions/article";
 import { useConfirm } from "@/hooks/use-confirm";
+import { useToast } from "@/hooks/use-toast";
 
 export function DeleteArticleButton({ articleId, title }: { articleId: string; title: string }) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const confirm = useConfirm();
+  const { show } = useToast();
 
   const handleDelete = async () => {
     const confirmed = await confirm({
@@ -25,6 +27,7 @@ export function DeleteArticleButton({ articleId, title }: { articleId: string; t
         setError(result.error);
         return;
       }
+      show(`"${title}" was deleted.`);
       router.refresh();
     });
   };

@@ -3,7 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { articles, purchases } from "../../../../../drizzle/schema/index";
-import { requireAuth, UnauthenticatedError } from "@/lib/permissions";
+import { requireAuth, UnauthenticatedError, SuspendedError, hasArticleAccess } from "@/lib/permissions";
 import { stripe } from "@/lib/stripe";
 
 const bodySchema = z.object({ articleId: z.string().uuid() });
@@ -16,7 +16,21 @@ export async function POST(request: Request) {
     if (err instanceof UnauthenticatedError) {
       return NextResponse.json({ error: "You must be logged in to purchase an article." }, { status: 401 });
     }
+    if (err instanceof SuspendedError) {
+      return NextResponse.json({ error: "Your account has been suspended." }, { status: 403 });
+    }
     throw err;
+  }
+
+  // Reader/Author/AuthorPro can all buy an article "as a reader" per
+  // docs/00_ScopeDocument.md Section 3, but Platform Admin is excluded
+  // — requireAuth() alone doesn't check role, only that the caller is
+  // signed in and not suspended.
+  if (session.user.role === "admin") {
+    return NextResponse.json(
+      { error: "Platform Admin accounts cannot purchase articles." },
+      { status: 403 }
+    );
   }
 
   const body = await request.json().catch(() => null);
@@ -41,6 +55,17 @@ export async function POST(request: Request) {
     .limit(1);
   if (existingPurchase) {
     return NextResponse.json({ error: "You already own this article." }, { status: 409 });
+  }
+
+  // A Platform or Publication subscriber already has full read access
+  // via getArticleAccessSource — without this check they could still
+  // hit this endpoint (e.g. a stale paywall render, or a direct
+  // request) and pay for an article they can already read for free.
+  if (await hasArticleAccess(session.user.id, article)) {
+    return NextResponse.json(
+      { error: "You already have access to this article through your subscription." },
+      { status: 409 }
+    );
   }
 
   const origin = new URL(request.url).origin;

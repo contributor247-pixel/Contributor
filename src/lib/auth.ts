@@ -3,9 +3,9 @@ import { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import bcrypt from "bcryptjs";
-import { eq } from "drizzle-orm";
+import { and, eq, gt } from "drizzle-orm";
 import { db } from "./db";
-import { users, accounts, sessions, verificationTokens } from "../../drizzle/schema/index";
+import { users, accounts, sessions, verificationTokens, autoLoginTokens } from "../../drizzle/schema/index";
 import { generateOtp } from "./otp";
 
 // Session length is a single fixed value for everyone. docs/04_Master
@@ -57,21 +57,46 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        // Optional — set only by the internal auto-login exchange right
+        // after clicking an email verification link (see
+        // completeAutoLoginAction in verify-email.ts). Never rendered as
+        // a real form field. When present, it's checked in place of a
+        // password so docs/01_ApplicationFlow.md Flow A step 6's
+        // "auto-logged in" can actually establish a session — Auth.js's
+        // Credentials provider has no password-less path otherwise, and
+        // the plaintext password isn't available at verification time
+        // (only its hash is stored).
+        autoLoginToken: { label: "Auto-login token", type: "text" },
       },
       authorize: async (credentials) => {
         const email = credentials?.email as string | undefined;
         const password = credentials?.password as string | undefined;
-        if (!email || !password) throw new InvalidCredentialsError();
+        const autoLoginToken = credentials?.autoLoginToken as string | undefined;
+        if (!email) throw new InvalidCredentialsError();
 
         const [user] = await db
           .select()
           .from(users)
           .where(eq(users.email, email))
           .limit(1);
-        if (!user || !user.passwordHash) throw new InvalidCredentialsError();
+        if (!user) throw new InvalidCredentialsError();
 
-        const valid = await bcrypt.compare(password, user.passwordHash);
-        if (!valid) throw new InvalidCredentialsError();
+        if (autoLoginToken) {
+          // Single-use by construction: delete-then-check, so a replayed
+          // or guessed token can never succeed twice, and a concurrent
+          // duplicate request can't both pass.
+          const [tokenRow] = await db
+            .delete(autoLoginTokens)
+            .where(and(eq(autoLoginTokens.token, autoLoginToken), eq(autoLoginTokens.userId, user.id)))
+            .returning();
+          if (!tokenRow || tokenRow.expires < new Date()) {
+            throw new InvalidCredentialsError();
+          }
+        } else {
+          if (!password || !user.passwordHash) throw new InvalidCredentialsError();
+          const valid = await bcrypt.compare(password, user.passwordHash);
+          if (!valid) throw new InvalidCredentialsError();
+        }
 
         // Suspended accounts are blocked outright, per
         // docs/00_ScopeDocument.md's Admin capabilities — checked before
@@ -89,7 +114,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         // docs/00_ScopeDocument.md Section 2 and Flow C — fire the code
         // now so it's already in the user's inbox by the time they reach
         // /verify-otp. Readers skip this entirely (see the jwt callback
-        // below, which marks them twoFactorVerified immediately).
+        // below, which marks them twoFactorVerified immediately). This
+        // still applies on the auto-login path — verifying an email
+        // doesn't substitute for 2FA.
         if (user.role === "author" || user.role === "admin") {
           try {
             await generateOtp(user.id);

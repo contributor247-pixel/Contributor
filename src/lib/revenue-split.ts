@@ -29,7 +29,8 @@ export async function calculateAndRecordSplit(
   articleId: string,
   grossAmountCents: number,
   sourceType: LedgerSourceType,
-  sourceId: string
+  sourceId: string,
+  payerId: string
 ): Promise<void> {
   const [config] = await db.select().from(platformConfig).limit(1);
   if (!config) throw new Error("platformConfig is not seeded");
@@ -49,6 +50,7 @@ export async function calculateAndRecordSplit(
       articleId,
       sourceType,
       sourceId,
+      payerId,
       grossAmountCents,
       authorCents: shares.author,
       publicationOwnerCents: shares.owner,
@@ -69,6 +71,7 @@ export async function calculateAndRecordSplit(
       articleId,
       sourceType,
       sourceId,
+      payerId,
       grossAmountCents,
       authorCents: shares.author,
       publicationOwnerCents: null,
@@ -160,6 +163,7 @@ export async function distributePooledSubscriptionRevenue(
       articleId: null,
       sourceType: subscription.type === "platform" ? "platform_subscription" : "publication_subscription",
       sourceId: subscription.id,
+      payerId: subscription.userId,
       grossAmountCents,
       authorCents: 0,
       publicationOwnerCents: null,
@@ -189,6 +193,6 @@ export async function distributePooledSubscriptionRevenue(
   for (let i = 0; i < orderedArticleIds.length; i++) {
     const articleId = orderedArticleIds[i];
     const amountForArticle = i === 0 ? baseShare + remainder : baseShare;
-    await calculateAndRecordSplit(articleId, amountForArticle, sourceType, subscription.id);
+    await calculateAndRecordSplit(articleId, amountForArticle, sourceType, subscription.id, subscription.userId);
   }
 }

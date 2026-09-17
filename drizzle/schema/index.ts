@@ -34,6 +34,7 @@ import { comments } from "./comments";
 import { otpCodes } from "./otpCodes";
 import { notifications, notificationTypeEnum } from "./notifications";
 import { platformConfig } from "./platformConfig";
+import { autoLoginTokens } from "./autoLoginTokens";
 
 // Re-export every table/enum by name explicitly. Deliberately NOT using
 // `export * from "./x"` here: under tsx's ESM transform, `export *` of a
@@ -76,6 +77,7 @@ export {
   notifications,
   notificationTypeEnum,
   platformConfig,
+  autoLoginTokens,
 };
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -159,6 +161,7 @@ export const readEventsRelations = relations(readEvents, ({ one }) => ({
 
 export const ledgerRelations = relations(ledger, ({ one }) => ({
   article: one(articles, { fields: [ledger.articleId], references: [articles.id] }),
+  payer: one(users, { fields: [ledger.payerId], references: [users.id] }),
 }));
 
 export const reportsRelations = relations(reports, ({ one }) => ({

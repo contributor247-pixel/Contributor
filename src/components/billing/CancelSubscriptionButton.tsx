@@ -4,12 +4,14 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { cancelSubscriptionAction } from "@/lib/actions/subscription";
 import { useConfirm } from "@/hooks/use-confirm";
+import { useToast } from "@/hooks/use-toast";
 
 export function CancelSubscriptionButton({ subscriptionId }: { subscriptionId: string }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const confirm = useConfirm();
+  const { show } = useToast();
 
   const handleCancel = async () => {
     const confirmed = await confirm({
@@ -26,6 +28,7 @@ export function CancelSubscriptionButton({ subscriptionId }: { subscriptionId: s
         setError(result.error);
         return;
       }
+      show("Subscription cancelled. You'll retain access until the current period ends.");
       router.refresh();
     });
   };

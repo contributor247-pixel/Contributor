@@ -69,8 +69,13 @@ export function ArticleForm({ mode, articleId, categories, initialValues }: Arti
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    getPremiumEligibilityAction().then(setEligibility);
-    getSelectablePublicationsAction().then(setSelectablePublications);
+    // Unhandled here previously — a transient failure (network blip,
+    // slow cold start) left an unhandled promise rejection instead of
+    // just degrading gracefully to "no Premium eligibility info yet" /
+    // "no Publications to choose from," which is what the UI already
+    // does correctly when these are still null/empty.
+    getPremiumEligibilityAction().then(setEligibility).catch(() => {});
+    getSelectablePublicationsAction().then(setSelectablePublications).catch(() => {});
   }, []);
 
   const addTag = (raw: string) => {
@@ -112,9 +117,28 @@ export function ArticleForm({ mode, articleId, categories, initialValues }: Arti
     setCoAuthors((prev) => [...prev, candidate]);
     setCoAuthorResults([]);
     setCoAuthorQuery("");
+    // Co-authored articles can't be Premium (see buildPayload below) —
+    // this used to drop silently at save time with no explanation, so
+    // the author would publish a co-authored article as free after
+    // having set a price, with no idea why.
+    if (isPremium) {
+      show("This article is now co-authored, so its Premium price has been removed — it will publish as free.", "warning");
+    }
   };
 
   const removeCoAuthor = (id: string) => setCoAuthors((prev) => prev.filter((c) => c.id !== id));
+
+  const handleIsPremiumChange = (checked: boolean) => {
+    setIsPremium(checked);
+    // Prefill the price field with the admin-configured default when
+    // switching Premium on for the first time — only if the field is
+    // still empty, so this never overwrites a price the author already
+    // typed or an existing article's saved price (initialValues sets
+    // priceInput directly, bypassing this handler entirely).
+    if (checked && !priceInput && eligibility) {
+      setPriceInput((eligibility.defaultPriceCents / 100).toFixed(2));
+    }
+  };
 
   const handleCoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCoverImageError(null);
@@ -153,6 +177,33 @@ export function ArticleForm({ mode, articleId, categories, initialValues }: Arti
 
   const handleSubmit = async (status: "draft" | "published") => {
     setFormError(null);
+    // coverImageError only ever blocked coverImageUrl from being set
+    // (see handleCoverImageChange above) — it never actually stopped
+    // submission, so choosing an oversized cover image and clicking
+    // Save Draft/Publish anyway silently saved with no cover instead of
+    // surfacing the problem again.
+    if (coverImageError) {
+      setIsDrawerOpen(true);
+      return;
+    }
+    // Premium + an invalid/out-of-range price previously fell through
+    // silently: resolvePremiumFields on the server just downgrades the
+    // article to free with no error, so the author would publish a
+    // "Premium" article that saved as free with no warning at all.
+    if (isPremium && coAuthors.length === 0) {
+      if (priceCents === null) {
+        setErrors({ priceCents: "Enter a price to publish this as a Premium article." });
+        setIsDrawerOpen(true);
+        return;
+      }
+      if (eligibility && (priceCents < eligibility.minPriceCents || priceCents > eligibility.maxPriceCents)) {
+        setErrors({
+          priceCents: `Price must be between $${(eligibility.minPriceCents / 100).toFixed(2)} and $${(eligibility.maxPriceCents / 100).toFixed(2)}.`,
+        });
+        setIsDrawerOpen(true);
+        return;
+      }
+    }
     const payload = buildPayload(status);
     const parsed = articleSchema.safeParse(payload);
     if (!parsed.success) {
@@ -167,18 +218,31 @@ export function ArticleForm({ mode, articleId, categories, initialValues }: Arti
     }
     setErrors({});
     setIsSubmitting(status);
-    const result =
-      mode === "create"
-        ? await createArticleAction(parsed.data)
-        : await updateArticleAction(articleId!, parsed.data);
-    setIsSubmitting(null);
-    if (!result.success) {
-      setFormError(result.error);
-      return;
+    // Wrapped in try/catch because a Server Action call can throw before
+    // ever reaching createArticleAction's own { success, error } return —
+    // e.g. Next.js's request body size limit (real cover/inline images
+    // are base64-encoded directly into this request; see next.config.ts)
+    // rejects the request at the framework level with an uncaught error.
+    // Without this, that error was silently leaving isSubmitting stuck
+    // (the button frozen on "Publishing...") with zero feedback that the
+    // article was never saved.
+    try {
+      const result =
+        mode === "create"
+          ? await createArticleAction(parsed.data)
+          : await updateArticleAction(articleId!, parsed.data);
+      if (!result.success) {
+        setFormError(result.error);
+        return;
+      }
+      show(status === "published" ? "Article published." : "Draft saved.");
+      router.push("/dashboard/author/articles");
+      router.refresh();
+    } catch {
+      setFormError("Something went wrong while saving. If your images are large, try a smaller file and try again.");
+    } finally {
+      setIsSubmitting(null);
     }
-    show(status === "published" ? "Article published." : "Draft saved.");
-    router.push("/dashboard/author/articles");
-    router.refresh();
   };
 
   return (
@@ -253,7 +317,7 @@ export function ArticleForm({ mode, articleId, categories, initialValues }: Arti
         coverImageError={coverImageError}
         eligibility={eligibility}
         isPremium={isPremium}
-        onIsPremiumChange={setIsPremium}
+        onIsPremiumChange={handleIsPremiumChange}
         priceInput={priceInput}
         onPriceInputChange={setPriceInput}
         priceError={errors.priceCents}

@@ -27,6 +27,7 @@ async function main() {
     platformSubYearlyCents: 14999,
     payPerArticleMinCents: 99,
     payPerArticleMaxCents: 4999,
+    payPerArticleDefaultCents: 499,
     standaloneAuthorSplitPct: 80,
     standalonePlatformSplitPct: 20,
     inPublicationAuthorSplitPct: 60,

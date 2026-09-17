@@ -13,7 +13,10 @@ export const articleSchema = z.object({
   categoryId: z.string().uuid("Select a category"),
   tags: z.array(z.string().min(1).max(40)).max(20, "Too many tags"),
   coAuthorIds: z.array(z.string().uuid()).max(5, "Too many co-authors"),
-  coverImageUrl: z.string().optional().nullable(),
+  // 2MB raw image, base64-encoded (~33% inflation) plus headroom for
+  // the data: URI prefix — matches ArticleForm's MAX_COVER_IMAGE_BYTES
+  // client check, re-enforced here since the client limit is UI-only.
+  coverImageUrl: z.string().max(2_900_000, "Cover image is too large.").optional().nullable(),
   status: z.enum(["draft", "published"]),
   isPremium: z.boolean(),
   priceCents: z.number().int().positive().optional().nullable(),

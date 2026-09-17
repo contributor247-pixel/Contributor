@@ -27,7 +27,17 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const popularPills = await getPopularCategoryPills(5);
+  // Every single page on the site renders through this layout, so an
+  // unguarded failure here (e.g. a transient Neon connectivity blip —
+  // observed directly during QA, see docs/01_ApplicationFlow.md's
+  // walkthrough) 500s the entire app, not just whichever page actually
+  // needed this data. The popular-categories strip is a non-essential
+  // navigation aid, not core content, so degrade to showing none rather
+  // than take the whole site down over it.
+  const popularPills = await getPopularCategoryPills(5).catch((err) => {
+    console.error("Failed to load popular category pills:", err);
+    return [];
+  });
 
   return (
     <html
