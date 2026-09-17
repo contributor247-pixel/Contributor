@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { publications, users, articles, categories, articleAuthors } from "../../../drizzle/schema/index";
 import type { ArticleCardData } from "@/components/shared/ArticleCard";
@@ -21,6 +21,17 @@ export async function getPublicationBySlug(slug: string) {
   return row ?? null;
 }
 
+// Scalability: previously fetched every article ever published into
+// this Publication with no limit at all — fine for a new masthead,
+// but unbounded over a Publication's real lifetime, and this backs a
+// public page (src/app/(marketing)/publication/[slug]/page.tsx) with
+// no pagination UI on top of it. Capped to the same 24-per-page size
+// used elsewhere in this codebase (getRecentArticles) rather than
+// leaving it truly unbounded; adding real pagination to this page is
+// a larger UI change out of scope for this pass, but this keeps the
+// query itself from growing without limit in the meantime.
+const PUBLICATION_ARTICLES_LIMIT = 24;
+
 export async function getPublicationArticleCards(publicationId: string): Promise<ArticleCardData[]> {
   const rows = await db
     .select({
@@ -36,7 +47,9 @@ export async function getPublicationArticleCards(publicationId: string): Promise
     })
     .from(articles)
     .innerJoin(categories, eq(articles.categoryId, categories.id))
-    .where(and(eq(articles.publicationId, publicationId), eq(articles.status, "published")));
+    .where(and(eq(articles.publicationId, publicationId), eq(articles.status, "published")))
+    .orderBy(desc(articles.publishedAt))
+    .limit(PUBLICATION_ARTICLES_LIMIT);
 
   const articleIds = rows.map((r) => r.id);
   const authorRows =

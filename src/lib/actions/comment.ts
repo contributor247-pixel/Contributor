@@ -1,6 +1,6 @@
 "use server";
 
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { comments, users } from "../../../drizzle/schema/index";
 import { requireAuth, SuspendedError } from "@/lib/permissions";
@@ -76,6 +76,15 @@ export type CommentWithAuthor = {
   authorAvatarUrl: string | null;
 };
 
+// Previously fetched every comment ever posted on the article with no
+// limit, on every single article-page load — fine for a new article,
+// unbounded over its real lifetime as comments accumulate. Capped to
+// the most recent N (oldest-first display order is preserved by
+// re-sorting after the DB gives back the newest rows); a real
+// "load more"/paginated thread is the proper fix if articles
+// routinely exceed this.
+const COMMENTS_LIMIT = 200;
+
 export async function getCommentsForArticle(articleId: string): Promise<CommentWithAuthor[]> {
   const rows = await db
     .select({
@@ -89,6 +98,7 @@ export async function getCommentsForArticle(articleId: string): Promise<CommentW
     .from(comments)
     .innerJoin(users, eq(comments.userId, users.id))
     .where(and(eq(comments.articleId, articleId), isNull(comments.deletedAt)))
-    .orderBy(asc(comments.createdAt));
-  return rows;
+    .orderBy(desc(comments.createdAt))
+    .limit(COMMENTS_LIMIT);
+  return rows.reverse();
 }

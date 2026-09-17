@@ -183,6 +183,14 @@ export async function setUserStatusAction(
 
 // ---- Moderation (11.3) ----
 
+// Naturally self-limiting in the common case (open reports get
+// resolved), but genuinely unbounded — no cap at all previously. A
+// real backlog or an abuse spike outpacing admin review would still
+// load every open report in one request. This limit is a stopgap so
+// the page can't grow without bound; a real "load more"/paginated
+// queue is the proper fix if the count regularly approaches this.
+const MODERATION_QUEUE_LIMIT = 200;
+
 export async function getModerationQueue() {
   await requireRole("admin");
 
@@ -202,7 +210,8 @@ export async function getModerationQueue() {
     .innerJoin(articles, eq(reports.articleId, articles.id))
     .innerJoin(users, eq(reports.reportedByUserId, users.id))
     .where(eq(reports.status, "open"))
-    .orderBy(desc(reports.createdAt));
+    .orderBy(desc(reports.createdAt))
+    .limit(MODERATION_QUEUE_LIMIT);
 
   return rows;
 }
@@ -216,6 +225,8 @@ export async function getReportDetail(reportId: string) {
       reason: reports.reason,
       detail: reports.detail,
       status: reports.status,
+      adminActionTaken: reports.adminActionTaken,
+      actionedAt: reports.actionedAt,
       createdAt: reports.createdAt,
       articleId: articles.id,
       articleTitle: articles.title,
@@ -246,7 +257,15 @@ export async function getReportDetail(reportId: string) {
 export async function dismissReportAction(reportId: string): Promise<AdminActionResult> {
   const session = await requireRole("admin");
 
-  await db
+  // Atomic claim: the UPDATE's own WHERE status='open' is what actually
+  // prevents a double-action, not a separate SELECT-then-check (which is
+  // a check-then-write race — two admins' concurrent clicks, or one
+  // admin's stale second tab, can both pass a plain SELECT check before
+  // either has written). Whichever admin's UPDATE lands first flips the
+  // status and its RETURNING gives back a row; a second concurrent call
+  // finds zero matching rows (status is no longer 'open') and bails out
+  // via claimed.length === 0, exactly like finding it already resolved.
+  const claimed = await db
     .update(reports)
     .set({
       status: "dismissed",
@@ -254,7 +273,12 @@ export async function dismissReportAction(reportId: string): Promise<AdminAction
       actionedByUserId: session.user.id,
       actionedAt: new Date(),
     })
-    .where(eq(reports.id, reportId));
+    .where(and(eq(reports.id, reportId), eq(reports.status, "open")))
+    .returning({ id: reports.id });
+  if (claimed.length === 0) {
+    const [existing] = await db.select({ id: reports.id }).from(reports).where(eq(reports.id, reportId)).limit(1);
+    return { success: false, error: existing ? "This report has already been resolved." : "Report not found." };
+  }
 
   revalidatePath("/dashboard/admin/moderation");
   return { success: true };
@@ -263,7 +287,24 @@ export async function dismissReportAction(reportId: string): Promise<AdminAction
 export async function unpublishArticleAction(reportId: string, articleId: string): Promise<AdminActionResult> {
   const session = await requireRole("admin");
 
-  const [report] = await db.select({ reason: reports.reason }).from(reports).where(eq(reports.id, reportId)).limit(1);
+  // Same atomic-claim pattern as dismissReportAction above — see that
+  // comment for why this can't be a plain SELECT-then-check.
+  const claimed = await db
+    .update(reports)
+    .set({
+      status: "actioned",
+      adminActionTaken: "unpublished",
+      actionedByUserId: session.user.id,
+      actionedAt: new Date(),
+    })
+    .where(and(eq(reports.id, reportId), eq(reports.status, "open")))
+    .returning({ reason: reports.reason });
+  if (claimed.length === 0) {
+    const [existing] = await db.select({ id: reports.id }).from(reports).where(eq(reports.id, reportId)).limit(1);
+    return { success: false, error: existing ? "This report has already been resolved." : "Report not found." };
+  }
+  const report = claimed[0];
+
   const [article] = await db.select({ title: articles.title }).from(articles).where(eq(articles.id, articleId)).limit(1);
   const [primaryAuthor] = await db
     .select({ userId: articleAuthors.userId })
@@ -272,15 +313,6 @@ export async function unpublishArticleAction(reportId: string, articleId: string
     .limit(1);
 
   await db.update(articles).set({ status: "unpublished", updatedAt: new Date() }).where(eq(articles.id, articleId));
-  await db
-    .update(reports)
-    .set({
-      status: "actioned",
-      adminActionTaken: "unpublished",
-      actionedByUserId: session.user.id,
-      actionedAt: new Date(),
-    })
-    .where(eq(reports.id, reportId));
 
   if (primaryAuthor && article && report) {
     await notifyModerationAction({
@@ -307,10 +339,9 @@ export async function suspendAuthorForReportAction(
   if (!target) return { success: false, error: "Author not found." };
   if (target.role === "admin") return { success: false, error: "Admin accounts cannot be suspended here." };
 
-  const [report] = await db.select({ reason: reports.reason }).from(reports).where(eq(reports.id, reportId)).limit(1);
-
-  await db.update(users).set({ status: "suspended", updatedAt: new Date() }).where(eq(users.id, authorUserId));
-  await db
+  // Same atomic-claim pattern as dismissReportAction above — see that
+  // comment for why this can't be a plain SELECT-then-check.
+  const claimed = await db
     .update(reports)
     .set({
       status: "actioned",
@@ -318,7 +349,15 @@ export async function suspendAuthorForReportAction(
       actionedByUserId: session.user.id,
       actionedAt: new Date(),
     })
-    .where(eq(reports.id, reportId));
+    .where(and(eq(reports.id, reportId), eq(reports.status, "open")))
+    .returning({ reason: reports.reason });
+  if (claimed.length === 0) {
+    const [existing] = await db.select({ id: reports.id }).from(reports).where(eq(reports.id, reportId)).limit(1);
+    return { success: false, error: existing ? "This report has already been resolved." : "Report not found." };
+  }
+  const report = claimed[0];
+
+  await db.update(users).set({ status: "suspended", updatedAt: new Date() }).where(eq(users.id, authorUserId));
 
   if (report) {
     await notifyModerationAction({

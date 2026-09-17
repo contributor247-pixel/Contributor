@@ -3,7 +3,7 @@ import type Stripe from "stripe";
 import { and, eq } from "drizzle-orm";
 import { render } from "@react-email/components";
 import { db } from "@/lib/db";
-import { purchases, subscriptions, users, articles, notifications } from "../../../../../drizzle/schema/index";
+import { purchases, subscriptions, users, articles, notifications, processedWebhookEvents } from "../../../../../drizzle/schema/index";
 import { stripe } from "@/lib/stripe";
 import { calculateAndRecordSplit, distributePooledSubscriptionRevenue } from "@/lib/revenue-split";
 import { mailer } from "@/lib/mailer";
@@ -45,12 +45,20 @@ function statusFromStripe(status: Stripe.Subscription.Status): "active" | "cance
   return "cancelled";
 }
 
+// Returns whether this call is the one that actually created the
+// subscription row (true) vs. found it already existed, either from
+// before this call or from a concurrent duplicate webhook delivery
+// that won the race (false) — Stripe only guarantees at-least-once
+// delivery, so checkout.session.completed can arrive more than once
+// for the same session/subscription. Callers use this to gate
+// create-only side effects (receipt email, activation notification)
+// so a duplicate delivery can't double-send them.
 async function upsertSubscriptionFromStripe(
   stripeSubscription: Stripe.Subscription,
   userId: string,
   type: SubscriptionType,
   publicationId: string | null
-) {
+): Promise<boolean> {
   const billingInterval = stripeSubscription.items.data[0]?.price.recurring?.interval === "year" ? "yearly" : "monthly";
   const item = stripeSubscription.items.data[0];
   const currentPeriodStart = new Date(item.current_period_start * 1000);
@@ -68,7 +76,7 @@ async function upsertSubscriptionFromStripe(
       .update(subscriptions)
       .set({ status, billingInterval, currentPeriodStart, currentPeriodEnd })
       .where(eq(subscriptions.id, existing.id));
-    return;
+    return false;
   }
 
   // A Platform subscription supersedes any existing active Publication
@@ -98,18 +106,29 @@ async function upsertSubscriptionFromStripe(
     }
   }
 
-  await db.insert(subscriptions).values({
-    userId,
-    type,
-    publicationId,
-    stripeSubscriptionId: stripeSubscription.id,
-    stripeCustomerId:
-      typeof stripeSubscription.customer === "string" ? stripeSubscription.customer : stripeSubscription.customer.id,
-    status,
-    billingInterval,
-    currentPeriodStart,
-    currentPeriodEnd,
-  });
+  // onConflictDoNothing (backed by the unique index on
+  // stripeSubscriptionId, see drizzle/schema/subscriptions.ts) is what
+  // actually prevents a duplicate row under concurrent delivery — the
+  // existence check above is a check-then-insert race on its own, the
+  // same reasoning already applied to purchases.stripePaymentIntentId
+  // below in the article-purchase branch.
+  const [inserted] = await db
+    .insert(subscriptions)
+    .values({
+      userId,
+      type,
+      publicationId,
+      stripeSubscriptionId: stripeSubscription.id,
+      stripeCustomerId:
+        typeof stripeSubscription.customer === "string" ? stripeSubscription.customer : stripeSubscription.customer.id,
+      status,
+      billingInterval,
+      currentPeriodStart,
+      currentPeriodEnd,
+    })
+    .onConflictDoNothing({ target: subscriptions.stripeSubscriptionId })
+    .returning({ id: subscriptions.id });
+  return Boolean(inserted);
 }
 
 export async function POST(request: Request) {
@@ -128,6 +147,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `Webhook signature verification failed: ${message}` }, { status: 400 });
   }
 
+  // Claim this Stripe event id before doing any side-effecting work.
+  // Stripe only guarantees at-least-once delivery, so the same event
+  // can arrive more than once (a retry after a slow response, a
+  // duplicate from Stripe's own infrastructure, a manual resend).
+  // checkout.session.completed's own branches are additionally guarded
+  // by unique constraints on the rows they insert, but
+  // invoice.payment_succeeded's pooled-revenue distribution can
+  // legitimately write MORE THAN ONE ledger row per delivery (one per
+  // distinct article read that period), so there's no single row-level
+  // constraint to hang idempotency on there — this event-id claim is
+  // what actually prevents double-counted revenue under duplicate
+  // delivery. onConflictDoNothing makes the claim itself race-safe
+  // under concurrent duplicate delivery, not just sequential retries.
+  const [claimed] = await db
+    .insert(processedWebhookEvents)
+    .values({ stripeEventId: event.id })
+    .onConflictDoNothing({ target: processedWebhookEvents.stripeEventId })
+    .returning({ stripeEventId: processedWebhookEvents.stripeEventId });
+  if (!claimed) {
+    return NextResponse.json({ received: true, duplicate: true });
+  }
+
   switch (event.type) {
     case "checkout.session.completed": {
       const checkoutSession = event.data.object as Stripe.Checkout.Session;
@@ -138,20 +179,17 @@ export async function POST(request: Request) {
         const stripeSubscriptionId =
           typeof checkoutSession.subscription === "string" ? checkoutSession.subscription : checkoutSession.subscription?.id;
         if (userId && stripeSubscriptionId) {
-          const [alreadyTracked] = await db
-            .select({ id: subscriptions.id })
-            .from(subscriptions)
-            .where(eq(subscriptions.stripeSubscriptionId, stripeSubscriptionId))
-            .limit(1);
           const stripeSubscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
-          await upsertSubscriptionFromStripe(stripeSubscription, userId, subscriptionType, publicationId);
+          const didInsert = await upsertSubscriptionFromStripe(stripeSubscription, userId, subscriptionType, publicationId);
 
-          // Only the first time this Stripe subscription is seen — a
-          // renewal fires invoice.payment_succeeded, not another
-          // checkout.session.completed, so this branch is inherently
-          // create-only, but the existence check above still guards
-          // against a duplicate webhook delivery for the same session.
-          if (!alreadyTracked && checkoutSession.amount_total != null) {
+          // Only the first time this Stripe subscription is actually
+          // inserted — a renewal fires invoice.payment_succeeded, not
+          // another checkout.session.completed, so this branch is
+          // inherently create-only. didInsert reflects the
+          // onConflictDoNothing result inside upsertSubscriptionFromStripe,
+          // not a separate pre-check, so a duplicate/concurrent webhook
+          // delivery for the same session can't double-send these.
+          if (didInsert && checkoutSession.amount_total != null) {
             const itemLabel =
               subscriptionType === "author_pro"
                 ? "AuthorPro subscription"

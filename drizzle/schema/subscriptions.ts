@@ -27,7 +27,7 @@ export const subscriptions = pgTable("subscriptions", {
     .references(() => users.id),
   type: subscriptionTypeEnum("type").notNull(),
   publicationId: uuid("publication_id").references(() => publications.id),
-  stripeSubscriptionId: text("stripe_subscription_id"),
+  stripeSubscriptionId: text("stripe_subscription_id").unique(),
   stripeCustomerId: text("stripe_customer_id"),
   status: subscriptionStatusEnum("status").notNull().default("active"),
   billingInterval: billingIntervalEnum("billing_interval").notNull(),

@@ -313,7 +313,11 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
                     <li key={item.slug} className="group py-3.5 first:pt-1 last:pb-1">
                       <Link href={`/article/${item.slug}`} prefetch={false} className="block">
                         <div className="flex items-center gap-2 text-[10px] font-medium text-text-muted">
-                          <span className="font-serif font-bold text-supportive">
+                          {/* Same contrast fix as the Premium badge
+                              above — text-supportive only reaches
+                              ~3.2:1 against white at this small bold
+                              size. */}
+                          <span className="font-serif font-bold text-[#a15804]">
                             0{i + 1}
                           </span>
                           <span>&bull;</span>

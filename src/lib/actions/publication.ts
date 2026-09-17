@@ -130,6 +130,45 @@ export async function getPublicationForManagementAction(publicationId: string): 
   return { ...publication, isOwner: true };
 }
 
+export type PublicationContributor = {
+  inviteId: string;
+  userId: string;
+  name: string | null;
+  email: string;
+  status: "pending" | "accepted" | "declined";
+  createdAt: Date;
+  respondedAt: Date | null;
+};
+
+// The Contributors tab previously only offered a search-to-invite box
+// with no way to see who had already been invited, who accepted or
+// declined, or who's currently an active contributor — an Owner had
+// zero visibility into their own Publication's contributor state.
+// Ownership-gated the same way getPublicationForManagementAction is.
+export async function getPublicationContributorsAction(publicationId: string): Promise<PublicationContributor[]> {
+  const session = await requireVerifiedAuthor();
+  const [publication] = await db.select({ ownerId: publications.ownerId }).from(publications).where(eq(publications.id, publicationId)).limit(1);
+  if (!publication) return [];
+  if (publication.ownerId !== session.user.id) {
+    throw new ForbiddenError("You do not own this Publication");
+  }
+  const rows = await db
+    .select({
+      inviteId: invites.id,
+      userId: invites.invitedUserId,
+      name: users.name,
+      email: users.email,
+      status: invites.status,
+      createdAt: invites.createdAt,
+      respondedAt: invites.respondedAt,
+    })
+    .from(invites)
+    .innerJoin(users, eq(invites.invitedUserId, users.id))
+    .where(eq(invites.publicationId, publicationId))
+    .orderBy(desc(invites.createdAt));
+  return rows;
+}
+
 export type ContributorCandidate = { id: string; name: string | null; email: string };
 
 export async function searchContributorCandidatesAction(query: string): Promise<ContributorCandidate[]> {

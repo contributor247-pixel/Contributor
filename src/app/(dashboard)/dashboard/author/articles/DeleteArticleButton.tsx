@@ -14,10 +14,16 @@ export function DeleteArticleButton({ articleId, title }: { articleId: string; t
   const { show } = useToast();
 
   const handleDelete = async () => {
+    // deleteArticleAction soft-deletes (sets status: "unpublished"),
+    // the same status a moderator's unpublish action uses — the row
+    // stays in this list, just relabeled, not removed. The dialog and
+    // toast copy must say that plainly: "will be removed" / "was
+    // deleted" previously promised something that didn't happen,
+    // which read as the delete silently failing.
     const confirmed = await confirm({
-      title: "Delete this article?",
-      message: `"${title}" will be removed. This can't be undone from here.`,
-      confirmLabel: "Delete",
+      title: "Unpublish this article?",
+      message: `"${title}" will be taken down from public view and marked Unpublished here. This can't be undone from here.`,
+      confirmLabel: "Unpublish",
     });
     if (!confirmed) return;
     setError(null);
@@ -27,7 +33,7 @@ export function DeleteArticleButton({ articleId, title }: { articleId: string; t
         setError(result.error);
         return;
       }
-      show(`"${title}" was deleted.`);
+      show(`"${title}" was unpublished.`);
       router.refresh();
     });
   };
@@ -40,7 +46,7 @@ export function DeleteArticleButton({ articleId, title }: { articleId: string; t
         disabled={isPending}
         className="flex min-h-11 items-center px-2 text-error underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isPending ? "Deleting..." : "Delete"}
+        {isPending ? "Unpublishing..." : "Unpublish"}
       </button>
       {error && <span role="alert" className="ml-2 text-xs text-error">{error}</span>}
     </span>

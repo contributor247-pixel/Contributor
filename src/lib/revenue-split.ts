@@ -190,9 +190,21 @@ export async function distributePooledSubscriptionRevenue(
 
   const sourceType: LedgerSourceType = subscription.type === "platform" ? "platform_subscription" : "publication_subscription";
 
-  for (let i = 0; i < orderedArticleIds.length; i++) {
-    const articleId = orderedArticleIds[i];
-    const amountForArticle = i === 0 ? baseShare + remainder : baseShare;
-    await calculateAndRecordSplit(articleId, amountForArticle, sourceType, subscription.id, subscription.userId);
-  }
+  // Scalability note: each call does 2 SELECTs + 1 INSERT of its own,
+  // fully independent of every other article's split (own article
+  // lookup, own ledger row, no shared state or ordering dependency
+  // between iterations) — previously run sequentially, which meant a
+  // subscriber who read N distinct articles in a billing period cost
+  // this one webhook handler N round-trips in series. Under this
+  // project's documented Neon latency (a single round-trip has been
+  // observed taking multiple seconds during a connectivity blip),
+  // that scales linearly and badly; running them concurrently doesn't
+  // reduce the total DB work but removes the serial-latency
+  // multiplication.
+  await Promise.all(
+    orderedArticleIds.map((articleId, i) => {
+      const amountForArticle = i === 0 ? baseShare + remainder : baseShare;
+      return calculateAndRecordSplit(articleId, amountForArticle, sourceType, subscription.id, subscription.userId);
+    })
+  );
 }

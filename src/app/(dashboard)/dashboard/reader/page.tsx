@@ -235,7 +235,10 @@ export default async function ReaderOverviewPage() {
                 className="group block p-4 transition-colors hover:bg-bg-muted/40"
               >
                 <div className="flex items-center gap-2 text-[10px] font-medium text-text-muted">
-                  <span className="font-serif font-bold text-supportive">
+                  {/* Same contrast fix as the Premium badge below —
+                      text-supportive only reaches ~3.2:1 against white
+                      at this small bold size. */}
+                  <span className="font-serif font-bold text-[#a15804]">
                     0{idx + 1}
                   </span>
                   <span>&bull;</span>

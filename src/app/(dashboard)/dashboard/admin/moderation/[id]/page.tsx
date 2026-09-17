@@ -132,16 +132,43 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
           />
         </div>
 
-        {/* Action Decision Footer */}
+        {/* Action Decision Footer — the action buttons only ever make
+            sense on an open report. Rendering them unconditionally let
+            an admin dismiss/unpublish/suspend on top of a report
+            that's already been resolved, with no indication anything
+            had already happened (confirmed via a real double-dismiss
+            test: the DB correctly recorded the first action, but this
+            page still offered all three buttons on a repeat visit). */}
         <div className="border-t border-border/80 pt-6">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-3">
-            Take Administrative Action:
-          </h2>
-          <ReportActions
-            reportId={report.id}
-            articleId={report.articleId}
-            authorUserId={report.primaryAuthor?.userId ?? null}
-          />
+          {report.status === "open" ? (
+            <>
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-3">
+                Take Administrative Action:
+              </h2>
+              <ReportActions
+                reportId={report.id}
+                articleId={report.articleId}
+                authorUserId={report.primaryAuthor?.userId ?? null}
+              />
+            </>
+          ) : (
+            <div className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-bg-alt/50 px-4 py-3 text-sm text-text-body">
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-success" aria-hidden="true" />
+              <span>
+                This report was already{" "}
+                <strong className="font-semibold text-text-heading">
+                  {report.adminActionTaken === "unpublished"
+                    ? "actioned — the article was unpublished"
+                    : report.adminActionTaken === "author_suspended"
+                      ? "actioned — the author was suspended"
+                      : "dismissed"}
+                </strong>
+                {report.actionedAt &&
+                  ` on ${new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(report.actionedAt)}`}
+                . No further action is needed.
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </div>

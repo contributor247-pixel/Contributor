@@ -35,6 +35,7 @@ import { otpCodes } from "./otpCodes";
 import { notifications, notificationTypeEnum } from "./notifications";
 import { platformConfig } from "./platformConfig";
 import { autoLoginTokens } from "./autoLoginTokens";
+import { processedWebhookEvents } from "./processedWebhookEvents";
 
 // Re-export every table/enum by name explicitly. Deliberately NOT using
 // `export * from "./x"` here: under tsx's ESM transform, `export *` of a
@@ -78,6 +79,7 @@ export {
   notificationTypeEnum,
   platformConfig,
   autoLoginTokens,
+  processedWebhookEvents,
 };
 
 export const usersRelations = relations(users, ({ many }) => ({

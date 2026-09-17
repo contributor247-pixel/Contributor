@@ -6,9 +6,10 @@ import { sendInviteAction, type ContributorCandidate } from "@/lib/actions/publi
 
 interface ContributorInviteProps {
   publicationId: string;
+  onInvited?: () => void;
 }
 
-export function ContributorInvite({ publicationId }: ContributorInviteProps) {
+export function ContributorInvite({ publicationId, onInvited }: ContributorInviteProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<ContributorCandidate[]>([]);
   const [message, setMessage] = useState<string | null>(null);
@@ -60,6 +61,7 @@ export function ContributorInvite({ publicationId }: ContributorInviteProps) {
     setMessage(`Invited ${candidate.name ?? candidate.email}.`);
     setQuery("");
     setResults([]);
+    onInvited?.();
   };
 
   return (

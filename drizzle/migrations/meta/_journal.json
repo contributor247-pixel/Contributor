@@ -50,6 +50,20 @@
       "when": 1789601389464,
       "tag": "0006_aberrant_arachne",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789662223167,
+      "tag": "0007_overrated_shatterstar",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789663042304,
+      "tag": "0008_marvelous_sunset_bain",
+      "breakpoints": true
     }
   ]
 }

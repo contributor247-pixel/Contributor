@@ -110,7 +110,12 @@ export default async function ReaderSubscriptionsPage({ searchParams }: ReaderSu
                         : s.publicationName ?? "Publication Subscription"}
                     </h3>
                     <p className="mt-1 text-xs text-text-muted">
-                      <span className="capitalize font-medium text-text-body">{s.billingInterval}</span> billing &bull; Renews {formatDate(s.currentPeriodEnd)}
+                      <span className="capitalize font-medium text-text-body">{s.billingInterval}</span> billing &bull;{" "}
+                      {s.status === "active"
+                        ? `Renews ${formatDate(s.currentPeriodEnd)}`
+                        : s.status === "cancelled"
+                          ? `Access ends ${formatDate(s.currentPeriodEnd)}`
+                          : `Ended ${formatDate(s.currentPeriodEnd)}`}
                     </p>
                   </div>
                 </div>

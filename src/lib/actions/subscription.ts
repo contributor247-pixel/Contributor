@@ -69,19 +69,42 @@ export async function cancelSubscriptionAction(subscriptionId: string): Promise<
   if (!subscription || subscription.userId !== session.user.id) {
     return { success: false, error: "Subscription not found" };
   }
-  if (subscription.status !== "active") {
+
+  // Atomic claim: the UPDATE's own WHERE status='active' is what
+  // actually prevents a double-cancel, not the plain status check above
+  // (that's ownership-only) — without this, two concurrent calls (a
+  // double-click, or two open tabs) can both pass a check-then-write
+  // read before either writes, both call stripe.subscriptions.cancel()
+  // on the same already-cancelled-by-the-other-call subscription, and
+  // Stripe's API rejects the second one — surfacing "Failed to cancel.
+  // Please try again." to a user whose subscription was in fact already
+  // successfully cancelled by their own other click. Claiming the DB
+  // row first means only one call ever reaches Stripe.
+  const claimed = await db
+    .update(subscriptions)
+    .set({ status: "cancelled" })
+    .where(and(eq(subscriptions.id, subscriptionId), eq(subscriptions.status, "active")))
+    .returning({ stripeSubscriptionId: subscriptions.stripeSubscriptionId });
+  if (claimed.length === 0) {
     return { success: false, error: "This subscription is not active" };
   }
 
-  if (subscription.stripeSubscriptionId) {
+  const stripeSubscriptionId = claimed[0].stripeSubscriptionId;
+  if (stripeSubscriptionId) {
     try {
-      await stripe.subscriptions.cancel(subscription.stripeSubscriptionId);
+      await stripe.subscriptions.cancel(stripeSubscriptionId);
     } catch (err) {
-      console.error("Failed to cancel subscription in Stripe:", err);
-      return { success: false, error: "Failed to cancel subscription. Please try again." };
+      // The DB row is already claimed as cancelled at this point — a
+      // Stripe-side failure here means the local state and Stripe's
+      // state have drifted, not that the cancellation as a whole
+      // failed to happen. Surfacing a generic retry-me error would be
+      // misleading (retrying would hit "not active" above, having
+      // told the user retrying is the fix). Logged for follow-up;
+      // still reported as success since the subscription itself is
+      // cancelled either way.
+      console.error("Cancelled locally but Stripe API call failed — local/Stripe state drift:", err);
     }
   }
 
-  await db.update(subscriptions).set({ status: "cancelled" }).where(eq(subscriptions.id, subscriptionId));
   return { success: true };
 }
