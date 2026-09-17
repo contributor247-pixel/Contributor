@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn, signOut, getSession } from "next-auth/react";
-import { ShieldCheck, Mail, Lock } from "lucide-react";
+import { ShieldCheck, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { loginSchema } from "@/lib/validators/auth";
 import { useShake } from "@/hooks/use-shake";
 
@@ -18,6 +18,7 @@ export function AdminLoginClient() {
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [shakeKey, setShakeKey] = useState(0);
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const shakeRef = useShake(shakeKey);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -113,13 +114,22 @@ export function AdminLoginClient() {
             <div className="relative">
               <Lock className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
               <input
-                type="password"
+                type={passwordVisible ? "text" : "password"}
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
-                className="h-12 w-full rounded-[4px] border border-white/15 bg-transparent pl-11 pr-4 text-white placeholder:text-white/40 transition-colors focus:border-white/40 focus:outline-none"
+                className="h-12 w-full rounded-[4px] border border-white/15 bg-transparent pl-11 pr-12 text-white placeholder:text-white/40 transition-colors focus:border-white/40 focus:outline-none"
               />
+              <button
+                type="button"
+                aria-label={passwordVisible ? "Hide password" : "Show password"}
+                aria-pressed={passwordVisible}
+                onClick={() => setPasswordVisible((v) => !v)}
+                className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-[4px] text-white/40 transition-colors hover:text-white"
+              >
+                {passwordVisible ? <EyeOff className="size-4" aria-hidden="true" /> : <Eye className="size-4" aria-hidden="true" />}
+              </button>
             </div>
             {errors.password && <p role="alert" className="mt-1 text-sm text-error">{errors.password}</p>}
           </div>

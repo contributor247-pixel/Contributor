@@ -61,8 +61,14 @@ export function VerifyOtpClient({ redirectTo = "/" }: { redirectTo?: string }) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-bg px-6 text-center">
       {/* eslint-disable-next-line @next/next/no-img-element -- static asset in public/, not worth next/image's overhead for a fixed-size auth-page logo */}
-      <img src="/logo/logo.png" alt="Contributor" className="mb-6 h-7 w-auto" />
+      <img src="/logo/logo.png" alt="Contributor" className="h-11 w-auto sm:h-13" />
+      <span className="mb-8 mt-2 font-serif text-xs italic tracking-wide text-text-muted">
+        The Discovery Journal
+      </span>
       <div className="w-full max-w-sm rounded-[4px] border border-border bg-surface p-10 shadow-sm">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+          Secure Sign-In
+        </p>
         <h1 className="mb-2 font-serif text-2xl font-semibold text-text-heading">
           Enter your code
         </h1>
