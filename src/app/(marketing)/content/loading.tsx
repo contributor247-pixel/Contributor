@@ -1,20 +1,33 @@
+import { SkeletonBlock } from "@/components/shared/SkeletonBlock";
 import { SkeletonCard } from "@/components/shared/SkeletonCard";
 import { SectionContainer } from "@/components/shared/SectionContainer";
 import { HeroBand } from "@/components/shared/HeroBand";
+import { TopicExplorerStrip } from "@/components/shared/TopicExplorerStrip";
 
-// Streamed fallback for the content listing grid (and, via the
-// [category] route reusing this same shape, category listings too)
-// while ArticleListingGrid's query resolves.
+// Streamed fallback for the content listing grid while
+// ArticleListingGrid's query resolves. Reuses the real HeroBand copy
+// (not a paraphrase), renders the real TopicExplorerStrip (with an
+// empty categories list, it falls back to its own built-in default
+// pills), and skeletonizes ArticleListingGrid's own "Live Catalog ·
+// Showing X-Y of Z" status bar above the grid — so the page doesn't
+// visibly reflow (different heading text, category bar or status bar
+// popping in, grid jumping down) the instant real content replaces
+// this skeleton; only the cards themselves should visibly change.
 export default function ContentLoading() {
   return (
     <>
       <HeroBand
-        eyebrow="Discover All Topics"
-        title="Content Listing"
-        description="Discover our complete content collection, systematically organized for your convenience. Navigate through diverse categories and uncover valuable insights."
+        eyebrow="The Full Discovery Catalog"
+        title="All Editorial Dispatches"
+        description="Explore our complete collection of curated reporting, essays, and independent journalism across all topics."
       />
+      <TopicExplorerStrip categories={[]} activeSlug="all" />
       <SectionContainer>
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mb-8 flex flex-col justify-between gap-3 border-b border-border/70 pb-4 sm:flex-row sm:items-center">
+          <SkeletonBlock className="h-4 w-56" />
+          <SkeletonBlock className="h-5 w-20" />
+        </div>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 9 }).map((_, i) => (
             <SkeletonCard key={i} />
           ))}
